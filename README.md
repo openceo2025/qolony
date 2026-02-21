@@ -1,3 +1,7 @@
+
+<img width="1024" height="1024" alt="Gemini_Generated_Image_gsglwugsglwugsgl" src="https://github.com/user-attachments/assets/19fa4f96-934c-4daa-affc-b0c23dc690ca" />
+
+
 # QOLONY  
 **A collective-intelligence project management system inspired by ant colonies**
 
