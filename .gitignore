@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+backend/pytest-cache-files-*/
+backend/pytest_tmp_run/
+backend/tmp_pytest/
+backend/tmp_pytest_*/
+.tmp_pytest*/
+
+# Node / frontend
+frontend/node_modules/
+frontend/dist/
+frontend/tsconfig.tsbuildinfo
+
+# Local runtime data
+*.log
+logs/
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# Local settings and scratch files
+.claude/settings.local.json
+tmp_*
+tmp-*
+*.tmp
+dist/
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

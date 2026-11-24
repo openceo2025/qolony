@@ -1,0 +1,62 @@
+app:
+  # 相対パスは backend/ からの位置。環境変数 QOLONY_DB_PATH で上書きできる。
+  db_path: data/qolony.db
+  crash_zone_pct: 20
+  task_signal_capacity_minutes_per_day: 240
+  seed_initial_tasks_on_empty_db: false
+  # 空のDBで初めて起動したとき、下の members 全員ぶんのデモタスクを作る。
+  seed_demo_data_on_empty_db: true
+  free_time_rate_default: 0.2
+  regular_minutes_per_day: 480
+  mobile_window_width: 460
+  mobile_window_height: 800
+  daily_snapshot_hour: 0
+  daily_snapshot_minute: 5
+
+ui:
+  # ja / en
+  language: ja
+
+team:
+  project_name: QOLONY
+  project_start_date: 2026-01-01
+  project_end_date: 2026-12-31
+  default_education_rate_monthly: 0.10
+
+users:
+  # 架空のメンバー。実際のチームに合わせて書き換える。
+  top_manager: 山田
+  members:
+    - name: 山田
+    - name: 鈴木
+    - name: 田中
+    - name: 高橋
+    - name: 中村
+  # 利用者切替で管理画面に入るときの簡易な確認。LAN 内の入口であり、API 全体を守る認証ではない。
+  # 公開・共有する環境では必ず変更すること。
+  passwords:
+    山田: change-me
+
+initial_tasks: []
+
+integrations:
+  # iQUAVIS（PLM）との連携は任意。既定では無効。
+  # 有効にすると、iQUAVIS の Excel マクロブックを中継して双方向に同期する。
+  iquavis:
+    enabled: false
+    base_url: ""
+    # 資格情報は設定ファイルに書かない（ブック側で管理する）。
+    username: ""
+    password: ""
+    timeout_seconds: 10
+    max_retries: 5
+    retry_base_seconds: 30
+    poll_interval_seconds: 60
+    allowed_project_ids: []
+    editor_workbook_path: ""
+    link_targets_workbook_path: ""
+    daily_sync_hour: 2
+    daily_sync_minute: 0
+    excel_server_save_enabled: false
+    excel_server_save_expected_project_count: 3
+    excel_server_save_timeout_seconds: 900

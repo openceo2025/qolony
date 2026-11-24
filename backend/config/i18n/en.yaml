@@ -1,0 +1,325 @@
+app:
+  tabs:
+    wbs: WBS
+    gantt: Gantt
+    colony: Colony
+    my: My Task
+    today: Today Tasks
+    split: Split
+    detail: Task Detail
+    members: Members
+    progress: Progress
+    ranking: Ranking
+    admin: Admin
+  auth:
+    password_prompt: "{name} password:"
+    password_entry_canceled: Password entry canceled
+    password_mismatch: Password mismatch
+    user_selected: "{name} selected"
+  footer:
+    user: user
+    task: task
+  server_down: Server is not running
+
+common:
+  task: Task
+  name: Name
+  status: Status
+  progress: Progress
+  assignee: Assignee
+  due_date: Due
+  estimate: Estimate
+  actual: Actual
+  active: Active
+  details: Details
+  split: Split
+  top_manager: Admin
+  current_user: Current User
+  save: Save
+  update: Update
+  delete: Delete
+  create: Create
+  add: Add
+  minutes: min
+  none: "-"
+  serial: Serial
+  parallel: Parallel
+  expand_all: Expand All
+  collapse_all: Collapse All
+  gap: Gap
+
+wbs:
+  hint: "Click: active / Double click: Details / Right click: Split"
+  show_completed: Show completed tasks
+  show_terminal: Show completed and aborted tasks
+  show_sync_excluded: Show sync-excluded
+  exclude_selected_from_sync: Exclude selected from sync
+  restore_selected_sync: Restore selected to sync
+  today_label: today
+
+my:
+  hint: "Click: active / Double click: Details / Right click: Split"
+  show_completed: Show completed
+  empty: No tasks to display
+  today_label: today
+
+task_card:
+  meta: "{assignee} | Due:{dueDate} | Estimate:{assigned} min Actual:{actual} min | {progress}%"
+  today_label: today
+
+today:
+  timer_title: Timer
+  active_task: Active Task
+  complete: Complete
+  running: Running
+  paused: Paused
+  ready: Ready
+  start: Start
+  pause: Pause
+  done: Done
+  ojt_teacher: OJT Teacher
+  ojt_teacher_none: None
+  ojt_timer_only: Teaching is recorded only by timer.
+  tasks_title: Today Tasks
+  no_tasks: No today tasks
+
+detail:
+  empty: No task selected
+  title_assignee_change: Change Assignee
+  title_due_date_change: Change Due Date
+  title_child_dependency_mode: Child Dependency Mode
+  title_actual_mh: Actual MH
+  title_assigned_mh: Assigned MH
+  title_deliverables: Deliverables
+  title_memo: Memo
+  button_change_assignee: Change Assignee
+  button_change_due_date: Change Due Date
+  button_change_dependency_mode: Update Dependency Mode
+  button_save_actual_mh: Save Actual MH
+  button_save_assigned_mh: Save Assigned MH
+  button_add_output: Add
+  button_save_memo: Save Memo
+  button_open_split: Open Split View
+  button_complete: Complete
+  button_reopen: Reopen
+  leaf_assignee_rule: Leaf task assignee can be changed only when actual MH is 0
+  due_date_rule: Due date can be changed only by the assignee or Admin
+  dependency_mode_rule: Dependency mode can be changed only by the assignee or Admin
+  leaf_actual_rule: Actual MH can be edited only for leaf tasks
+  root_assigned_rule: Assigned MH overwrite is available only for root tasks
+  no_outputs: No deliverables
+  completed_rule: Completed tasks cannot be edited
+  edit_rule: Only the assignee or Admin can edit this task
+  output_title_placeholder: Title
+  output_url_placeholder: URL
+  split_view_label: Split View
+  due_date_range: "Allowed range: {minDate} to {maxDate}"
+
+gantt:
+  title: Gantt
+  quarter_day: 6 Hours
+  half_day: Half Day
+  day: Day
+  week: Week
+  month: Month
+  show_task_list: Show Task List
+  completed_task_visibility: Completed tasks
+  completed_task_show_all: Show all
+  completed_task_hide_from_depth: "Hide completed from level {level}"
+  no_visible_tasks: No tasks match the current display settings.
+  update_hint: Drag to update start and end dates directly. Changes are saved without navigation.
+  pan_hint: Drag blank chart space to pan horizontally. Shift+wheel also scrolls sideways.
+  sync_hint: Paired tasks are queued for iQUAVIS sync after save.
+  update_saved: Schedule saved
+  selected: Selected
+  assignee_today: Assignee / today
+  sync_state: Sync State
+  sync_ready: Sync result will appear in the footer
+  sync_pending: Saving...
+  paired_chip: iQUAVIS
+  paired_status: iQUAVIS linked
+  no_selection: Select a task to see its schedule and sync state
+  today_on: "today: ON"
+  today_off: "today: OFF"
+
+progress_view:
+  task_tree_title: Target Task (WBS)
+  signal: Signal
+  task: Task
+  progress: Progress
+  speed_summary: "V_actual: {actual} / V_average: {average} / V_critical: {critical} / V_safe: {safe}"
+  chart_controls: Chart Controls
+  lock_x: Lock X
+  lock_y: Lock Y
+  fit: Fit
+  wheel_hint: "Wheel: pan X / Ctrl+Wheel: zoom X / Shift+Ctrl+Wheel: zoom Y / Double click: reset"
+  progress_chart: Progress
+  speed_chart: Speed
+  select_task: Please select a task
+  legend_complete_task: Completion Forecast
+  legend_plan: Plan
+  legend_actual_mh: Actual MH
+  legend_actual_speed: Actual Speed
+  legend_average_speed: Average Speed
+  legend_critical_speed: Critical Speed
+  legend_safe_speed: Safe Speed
+  axis_progress_pct: Progress (%)
+  axis_actual_mh_min: Actual MH (min)
+  axis_speed_min_day: min/day
+  marker_today: Today
+  marker_due: Due
+
+ranking:
+  title: Ranking
+  publication_rule: Only the top 50% are visible to everyone. You always see your own value and rank.
+  visibility_published: Published
+  visibility_self_only: Self only
+  empty: No ranking data for this month
+  column_rank: Rank
+  column_name: Name
+  column_visibility: Visibility
+  metrics:
+    thr:
+      label: THR
+      description: Completed assigned MH divided by work budget. Higher means more delivery within the budget.
+      top_title: Monthly Output Driver
+      self_title: Your THR
+      unit: pt
+    exec_ratio:
+      label: ExecRatio
+      description: Effective actual MH versus assigned MH on owned tasks. Highlights stable execution.
+      top_title: Monthly Execution Anchor
+      self_title: Your ExecRatio
+      unit: ratio
+    est_ratio:
+      label: EstRatio
+      description: Effective actual MH versus assigned MH on tasks you created. Highlights estimate quality.
+      top_title: Monthly Estimate Driver
+      self_title: Your EstRatio
+      unit: ratio
+    teaching_minutes:
+      label: TeachingMinutes
+      description: OJT teaching time that deserves recognition.
+      top_title: Monthly Teaching Driver
+      self_title: Your TeachingMinutes
+      unit: min
+
+members:
+  empty: No members registered
+  list_title: Members
+  status_title: Status
+  name: Name
+  default_commit: Default Commit
+  condition: Condition
+  role: Role
+  role_none: Not set
+  save_profile: Save Profile
+  daily_title: This Week / Next Week
+  column_day: Day
+  column_commit: Commit
+  column_leave: Leave
+  column_note: Note
+  save_day: Save
+  leave_none: Normal
+  leave_full: Full Day
+  leave_am: AM Half
+  leave_pm: PM Half
+  leave_custom: Custom
+  custom_leave_placeholder: Leave text
+  note_placeholder: Note
+  commit_blank: Default
+  role_approval: Approval
+  role_review: Review
+  role_leader: Team Leader
+  role_design: Design
+  role_tracer: Tracer
+  condition_great: 😄 Great
+  condition_good: 🙂 Good
+  condition_normal: 😐 Normal
+  condition_tired: 😟 Low
+  condition_bad: 😵 Bad
+
+admin:
+  top_manager: "Admin: {name}"
+  current_user: "Current User: {name}"
+  title_education_rate: Education Rate
+  title_crash_zone: Crash Zone
+  title_db_ops: DB Operations
+  title_create_root_task: Create Root Task
+  title_rework_link: Rework Link
+  title_infeasibility: Infeasibility
+  button_finalize_daily_actuals: Finalize Daily Actuals
+  finalize_daily_actuals_once: Once per day
+  finalize_daily_actuals_confirm: Force finalize the previous workday actual MH?
+  already_finalized: Already finalized for today
+  root_task_name_placeholder: Task name
+  root_task_memo_placeholder: Memo
+  root_task_mh_placeholder: MH (min)
+  select_rework_task: Select rework task
+  select_prevented_by: Select prevented_by
+  button_link: Link
+  column_target: Target
+  column_status: Status
+  column_gap: Gap
+  status_infeasible: Infeasible
+  status_feasible: OK
+
+split:
+  no_active_task: No active task
+  target_summary: "Target: {name} / Estimate:{assigned} min / Actual:{actual} min / Due:{dueDate}"
+  parent_dependency: Parent Dependency
+  apply_template: Apply Template
+  equalize_mh: Equalize MH
+  execute_split: Execute Split
+  execute_assignee_update: Execute Assignee Update
+  execute_existing_update: Save Existing Task Changes
+  discard_draft: Discard Draft
+  draft_saved: Draft saved for this parent task
+  draft_discarded: Split draft was discarded
+  conflict_draft_cancelled: The stale draft was cancelled. Review the latest values before editing again.
+  assignee_update_errors_title: Rows that could not be updated
+  assignee_update_error_row: "Row {row}: {task} - {message}"
+  assignee_update_failed_summary: "Assignee update failed for {failed} row(s)"
+  existing_update_failed_summary: "Existing task update failed for {failed} row(s)"
+  assignee_update_partial_summary: "Assignee update: {changed} succeeded, {failed} failed"
+  existing_update_partial_summary: "Existing task update: {changed} succeeded, {failed} failed"
+  no_existing_changes: There are no existing task changes to save
+  edit_rule: Only the parent task assignee or Admin can edit splits
+  assignee_rule: Existing name, MH ratio, memo, due date, and assignee changes can be saved without executing a split. Assignee changes to leaf tasks require actual MH to be 0.
+  columns_hint: "Columns: Task Name / MH Ratio / Actual MH / Memo / Due Date / Assignee"
+  clipboard_hint: "Clipboard: Ctrl+C / Ctrl+V / Ctrl+D (fill down) / Ctrl+R (fill right)"
+  resplit_hint: Existing child tasks appear at the top. Existing children keep assignee and actual MH fixed, while name, memo, due date, and MH ratio remain editable.
+  actual_hint: Actual MH cannot be entered manually. It is redistributed automatically during split.
+  context_paste: Paste
+  context_paste_unsupported: Clipboard API is required for context-menu paste in this browser
+  context_paste_select_cell: Select a destination cell before pasting
+  invalid_template: Invalid template selection
+  template_applied: Template applied
+  edit_permission_error: Only the assignee or Admin can edit
+  equalized: MH ratio evenly distributed
+  no_assignee_update_target: No assignee changes to apply
+  split_permission_error: Only the assignee or Admin can split
+  existing_task_name_required: Existing child task names cannot be blank
+  task_name_required: Enter a task name
+  rows_required: No task rows entered
+  split_min_rows: Split requires at least two rows
+  blank_line_error: Blank rows are not allowed between task rows
+  resplit_include_all: Include all existing child tasks during re-split
+  invalid_assignee: "Invalid assignee: {name}"
+  cannot_change_assignee: "Cannot change assignee: {name}"
+  ratio_numeric_only: Enter MH ratio as numbers only
+  ratio_number_only: Enter MH ratio as numeric values
+  ratio_total_error: MH ratio total must be exactly 100
+  actual_mh_integer_error: Actual MH must be an integer of 0 or more
+  due_date_required: Enter a due date
+  due_date_free: Due dates can be entered freely. Parent dates are adjusted automatically where possible, and remaining inconsistencies are reported after saving.
+  existing_task_id_invalid: Existing child task identifier is invalid
+  existing_task_missing: Existing child task was not found
+  assignee_select_error: Select a valid assignee
+  row_label: "#"
+  column_task_name: Task Name
+  column_mh_ratio: MH Ratio
+  column_actual_mh: Actual MH
+  column_memo: Memo
+  column_due_date: Due Date
+  column_assignee: Assignee

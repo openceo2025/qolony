@@ -1,0 +1,325 @@
+app:
+  tabs:
+    wbs: WBS
+    gantt: ガント
+    colony: 巣の外
+    my: 担当タスク
+    today: 本日のタスク
+    split: 分割
+    detail: タスク詳細
+    members: メンバー
+    progress: 進捗
+    ranking: ランキング
+    admin: 管理
+  auth:
+    password_prompt: "{name} のパスワード:"
+    password_entry_canceled: パスワード入力を中止しました
+    password_mismatch: パスワードが一致しません
+    user_selected: "{name} を選択しました"
+  footer:
+    user: ユーザー
+    task: タスク
+  server_down: サーバーが稼働していません
+
+common:
+  task: タスク
+  name: 名前
+  status: ステータス
+  progress: 進捗
+  assignee: 担当
+  due_date: 期日
+  estimate: 見込
+  actual: 実績
+  active: アクティブ
+  details: 詳細
+  split: 分割
+  top_manager: 管理
+  current_user: 現在ユーザー
+  save: 保存
+  update: 更新
+  delete: 削除
+  create: 作成
+  add: 追加
+  minutes: 分
+  none: "-"
+  serial: 直列
+  parallel: 並列
+  expand_all: 全展開
+  collapse_all: 全折りたたみ
+  gap: ギャップ
+
+wbs:
+  hint: "クリック: アクティブ / ダブルクリック: 詳細 / 右クリック: 分割"
+  show_completed: 完了タスクを表示
+  show_terminal: 完了・中止タスクを表示
+  show_sync_excluded: 同期対象外を表示
+  exclude_selected_from_sync: 同期対象外にする
+  restore_selected_sync: 同期対象に戻す
+  today_label: today
+
+my:
+  hint: "クリック: アクティブ / ダブルクリック: 詳細 / 右クリック: 分割"
+  show_completed: 完了を表示
+  empty: 表示対象のタスクはありません
+  today_label: today
+
+task_card:
+  meta: "{assignee} | 期日:{dueDate} | 見込:{assigned}分 実績:{actual}分 | {progress}%"
+  today_label: today
+
+today:
+  timer_title: タイマー
+  active_task: アクティブタスク
+  complete: 完了
+  running: 計測中
+  paused: 一時停止中
+  ready: 待機中
+  start: スタート
+  pause: 一時停止
+  done: 完了
+  ojt_teacher: OJT担当
+  ojt_teacher_none: なし
+  ojt_timer_only: 教育実績はタイマー計測分のみ記録します
+  tasks_title: 本日のタスク
+  no_tasks: 本日のタスクはありません
+
+detail:
+  empty: タスクが選択されていません
+  title_assignee_change: 担当変更
+  title_due_date_change: 期日変更
+  title_child_dependency_mode: 子タスク依存モード
+  title_actual_mh: 実績MH
+  title_assigned_mh: 見込MH
+  title_deliverables: 成果物
+  title_memo: メモ
+  button_change_assignee: 担当変更
+  button_change_due_date: 期日変更
+  button_change_dependency_mode: 依存モード更新
+  button_save_actual_mh: 実績MHを保存
+  button_save_assigned_mh: 見込MHを保存
+  button_add_output: 追加
+  button_save_memo: メモを保存
+  button_open_split: 分割ビューへ
+  button_complete: 完了
+  button_reopen: 完了解除
+  leaf_assignee_rule: 葉タスクの担当変更は実績MHが0のときだけ可能です
+  due_date_rule: 期日変更は担当者または管理のみ可能です
+  dependency_mode_rule: 依存モード変更は担当者または管理のみ可能です
+  leaf_actual_rule: 実績MHは末端タスクのみ編集できます
+  root_assigned_rule: 見込MHの上書きはルートタスクのみ可能です
+  no_outputs: 成果物はありません
+  completed_rule: 完了タスクは編集できません
+  edit_rule: 担当者または管理のみ編集できます
+  output_title_placeholder: タイトル
+  output_url_placeholder: URL
+  split_view_label: 分割ビュー
+  due_date_range: "変更可能範囲: {minDate} から {maxDate}"
+
+gantt:
+  title: ガント
+  quarter_day: 6時間
+  half_day: 半日
+  day: 日
+  week: 週
+  month: 月
+  show_task_list: 一覧を表示
+  completed_task_visibility: 完了タスク
+  completed_task_show_all: すべて表示
+  completed_task_hide_from_depth: "第{level}階層から非表示"
+  no_visible_tasks: 現在の表示設定に該当するタスクはありません。
+  update_hint: ドラッグで着手日と期日を直接更新できます。画面遷移なしで保存します。
+  pan_hint: タスクが無い場所をドラッグすると左右に移動できます。Shift+ホイールでも横スクロールできます。
+  sync_hint: ペアリング済みタスクは保存後に iQUAVIS 同期キューへ入ります。
+  update_saved: 日程を保存しました
+  selected: 選択中
+  assignee_today: 担当 / today
+  sync_state: 同期状態
+  sync_ready: 同期結果は画面下のメッセージに表示されます
+  sync_pending: 保存中...
+  paired_chip: iQUAVIS
+  paired_status: iQUAVIS連携済み
+  no_selection: タスクを選ぶと日程と同期状態を表示します
+  today_on: "today: ON"
+  today_off: "today: OFF"
+
+progress_view:
+  task_tree_title: 対象タスク（WBS）
+  signal: シグナル
+  task: タスク
+  progress: 進捗
+  speed_summary: "V_actual: {actual} / V_average: {average} / V_critical: {critical} / V_safe: {safe}"
+  chart_controls: グラフ操作
+  lock_x: X固定
+  lock_y: Y固定
+  fit: 全体表示
+  wheel_hint: "ホイール: 横移動 / Ctrl+ホイール: 横ズーム / Shift+Ctrl+ホイール: 縦ズーム / ダブルクリック: リセット"
+  progress_chart: 進捗率
+  speed_chart: 業務速度
+  select_task: タスクを選択してください
+  legend_complete_task: 完了見込み
+  legend_plan: 計画
+  legend_actual_mh: 実績MH
+  legend_actual_speed: 実績速度
+  legend_average_speed: 平均速度
+  legend_critical_speed: 危険速度
+  legend_safe_speed: 安全速度
+  axis_progress_pct: 進捗(%)
+  axis_actual_mh_min: 実績MH(分)
+  axis_speed_min_day: 分/日
+  marker_today: 今日
+  marker_due: 期日
+
+ranking:
+  title: ランキング
+  publication_rule: 上位50%のみ全員に公開します。本人は自分の値と順位を常に確認できます。
+  visibility_published: 公開
+  visibility_self_only: 本人のみ
+  empty: 今月のランキングデータはありません
+  column_rank: 順位
+  column_name: 名前
+  column_visibility: 公開範囲
+  metrics:
+    thr:
+      label: 成果率
+      description: 完了した見込MHを可用時間で割った値です。限られた時間で成果を出せた度合いを見ます。
+      top_title: 今月の成果牽引役
+      self_title: あなたの成果率
+      unit: pt
+    exec_ratio:
+      label: 実行効率
+      description: 自分担当タスクの実績MHと見込MHの比率です。安定した遂行力を見ます。
+      top_title: 今月の実行力
+      self_title: あなたの実行効率
+      unit: 倍
+    est_ratio:
+      label: 見積精度
+      description: 自分が作成したタスクの実績MHと見込MHの比率です。見積責任の精度を見ます。
+      top_title: 今月の見積力
+      self_title: あなたの見積精度
+      unit: 倍
+    teaching_minutes:
+      label: 教育貢献
+      description: OJT で教えた時間です。周囲を支えた貢献を称賛します。
+      top_title: 今月の教育貢献
+      self_title: あなたの教育貢献
+      unit: 分
+
+members:
+  empty: メンバーが登録されていません
+  list_title: メンバー
+  status_title: ステータス
+  name: 名前
+  default_commit: 既定コミット率
+  condition: 調子
+  role: Role
+  role_none: 未設定
+  save_profile: 基本情報を保存
+  daily_title: 今週・来週
+  column_day: 日
+  column_commit: コミット率
+  column_leave: 休み情報
+  column_note: メモ
+  save_day: 保存
+  leave_none: 通常
+  leave_full: 全休
+  leave_am: AM半休
+  leave_pm: PM半休
+  leave_custom: 自由入力
+  custom_leave_placeholder: 休み情報
+  note_placeholder: メモ
+  commit_blank: 既定
+  role_approval: 承認
+  role_review: 審査
+  role_leader: チームリーダー
+  role_design: 設計
+  role_tracer: トレーサー
+  condition_great: 😄 絶好調
+  condition_good: 🙂 好調
+  condition_normal: 😐 普通
+  condition_tired: 😟 低調
+  condition_bad: 😵 不調
+
+admin:
+  top_manager: "管理: {name}"
+  current_user: "現在ユーザー: {name}"
+  title_education_rate: 教育比率設定
+  title_crash_zone: CrashZone設定
+  title_db_ops: DB操作
+  title_create_root_task: ルートタスク作成
+  title_rework_link: 手戻り紐付け
+  title_infeasibility: 不成立一覧
+  button_finalize_daily_actuals: 実績MHの日次確定
+  finalize_daily_actuals_once: 1日1回のみ実行
+  finalize_daily_actuals_confirm: 前営業日の実績MHを強制確定しますか？
+  already_finalized: 本日分はすでに実行済みです
+  root_task_name_placeholder: タスク名
+  root_task_memo_placeholder: メモ
+  root_task_mh_placeholder: MH(分)
+  select_rework_task: 手戻りタスクを選択
+  select_prevented_by: prevented_by を選択
+  button_link: 紐付け
+  column_target: 対象
+  column_status: 状態
+  column_gap: ギャップ
+  status_infeasible: 不成立
+  status_feasible: 正常
+
+split:
+  no_active_task: アクティブタスクがありません
+  target_summary: "対象: {name} / 見込:{assigned}分 / 実績:{actual}分 / 期限:{dueDate}"
+  parent_dependency: 親タスク依存
+  apply_template: テンプレート適用
+  equalize_mh: MH均等配分
+  execute_split: 分割実行
+  execute_assignee_update: 担当者変更の実行
+  execute_existing_update: 既存タスク変更を一括保存
+  discard_draft: 下書きを破棄
+  draft_saved: この親タスクの下書きを保存中です
+  draft_discarded: Splitの下書きを破棄しました
+  conflict_draft_cancelled: 古い下書きをキャンセルしました。最新値を確認してから、もう一度編集してください。
+  assignee_update_errors_title: 更新できなかった行
+  assignee_update_error_row: "{row}行目: {task} - {message}"
+  assignee_update_failed_summary: "担当者変更に失敗した行があります: {failed}件"
+  existing_update_failed_summary: "既存タスク変更に失敗した行があります: {failed}件"
+  assignee_update_partial_summary: "担当者変更: {changed}件成功 / {failed}件失敗"
+  existing_update_partial_summary: "既存タスク変更: {changed}件成功 / {failed}件失敗"
+  no_existing_changes: 保存する既存タスク変更はありません
+  edit_rule: 分割編集は親タスク担当者または管理のみ可能です
+  assignee_rule: 既存タスクの名前、MH比率、メモ、期限、担当者は分割せず一括保存できます。葉タスクの担当変更は実績MHが0のときだけ可能です。
+  columns_hint: "列順: タスク名 / MH比率 / 実績MH / メモ / 期限 / 担当"
+  clipboard_hint: "範囲選択とコピー: Ctrl+C / Ctrl+V / Ctrl+D(下方向コピー) / Ctrl+R(右方向コピー)"
+  resplit_hint: 既存子タスクは先頭に表示されます。既存子は担当と実績固定で、名前、メモ、期限、MH比率を編集できます。
+  actual_hint: 実績MHは手動入力できません。分割時に自動配分されます。
+  context_paste: 貼り付け
+  context_paste_unsupported: このブラウザでは右クリック貼り付けに Clipboard API が必要です
+  context_paste_select_cell: 貼り付け先セルを選択してください
+  invalid_template: テンプレート選択が不正です
+  template_applied: テンプレートを適用しました
+  edit_permission_error: 担当者本人または管理のみ編集できます
+  equalized: MH比率を均等配分しました
+  no_assignee_update_target: 担当者変更の対象がありません
+  split_permission_error: 担当者本人または管理のみ分割できます
+  existing_task_name_required: 既存子タスクのタスク名は空にできません
+  task_name_required: タスク名を入力してください
+  rows_required: タスク行が入力されていません
+  split_min_rows: 分割は2行以上で指定してください
+  blank_line_error: タスク行の途中に空行があります
+  resplit_include_all: 再分割時は既存子タスクを全て含めてください
+  invalid_assignee: "担当者が不正です: {name}"
+  cannot_change_assignee: "担当変更できません: {name}"
+  ratio_numeric_only: MH比率は数値のみ入力してください
+  ratio_number_only: MH比率は数値で入力してください
+  ratio_total_error: MH比率の合計を100にしてください
+  actual_mh_integer_error: 実績MHは0以上の整数で入力してください
+  due_date_required: 期限を入力してください
+  due_date_free: 期限は自由に入力できます。可能な範囲で親タスクの日程を自動調整し、残る不整合は保存後に警告します。
+  existing_task_id_invalid: 既存子タスクの識別子が不正です
+  existing_task_missing: 既存子タスクが見つかりません
+  assignee_select_error: 担当者を正しく選択してください
+  row_label: "#"
+  column_task_name: タスク名
+  column_mh_ratio: MH比率
+  column_actual_mh: 実績MH
+  column_memo: メモ
+  column_due_date: 期限
+  column_assignee: 担当

@@ -1,0 +1,809 @@
+.colony {
+  font-family: "Yu Gothic UI", "Meiryo", system-ui, sans-serif;
+  color: #3d302c;
+  background: #f9f4e9;
+  font-synthesis: none;
+}
+.colony * {
+  box-sizing: border-box;
+}
+.colony {
+  height: 100dvh;
+  min-height: 360px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.colony button,
+.colony input,
+.colony select,
+.colony textarea {
+  font: inherit;
+  color: inherit;
+}
+.colony button {
+  cursor: pointer;
+}
+.colony button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.colony button:focus-visible,
+.colony select:focus-visible,
+.colony input:focus-visible,
+.colony textarea:focus-visible,
+.colony canvas:focus-visible {
+  outline: 3px solid #20827c;
+  outline-offset: 2px;
+}
+.colony .colony-header {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  height: 66px;
+  flex: none;
+  padding: 0 27px;
+  background: #fcf8ee;
+  border-bottom: 1px solid #dfccae;
+  box-shadow: 0 2px 10px #72492810;
+}
+.colony .wordmark {
+  color: #4b2730;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font:
+    800 24px/1 "Trebuchet MS",
+    "Yu Gothic UI",
+    sans-serif;
+  letter-spacing: 0.13em;
+}
+.colony .header-divider {
+  height: 22px;
+  width: 1px;
+  background: #d8cbb9;
+}
+.colony .colony-header h1 {
+  font-size: 15px;
+  letter-spacing: 0.08em;
+  margin: 0;
+}
+.colony .org-stats {
+  margin-left: auto;
+  display: flex;
+  gap: 25px;
+  align-items: center;
+}
+.colony .org-stats div {
+  display: flex;
+  gap: 9px;
+  align-items: baseline;
+}
+.colony .org-stats span,
+.colony .profile-btn small {
+  font-size: 11px;
+  color: #726557;
+  font-weight: 650;
+}
+.colony .org-stats strong {
+  font:
+    700 16px/1.2 "Segoe UI",
+    sans-serif;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+.colony .profile-btn {
+  border: 0;
+  border-left: 1px solid #ded2bf;
+  background: none;
+  padding: 0 0 0 21px;
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  font-weight: 700;
+}
+.colony .profile-btn > span:nth-child(2) {
+  text-align: left;
+  line-height: 1.25;
+}
+.colony .profile-btn small {
+  display: block;
+  font-size: 10px;
+}
+.colony .avatar {
+  display: grid;
+  place-items: center;
+  width: 33px;
+  height: 33px;
+  border-radius: 50%;
+  color: #492835;
+  background: #edc46d;
+}
+.colony .avatar svg {
+  width: 26px;
+}
+.colony .field {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  isolation: isolate;
+  background: #edb14d;
+}
+.colony .field > canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  cursor: grab;
+  outline-offset: -4px;
+}
+.colony .top-left,
+.colony .top-right,
+.colony .bottom-left,
+.colony .map-nav,
+.colony .drawing,
+.colony .notice,
+.colony .map-hint,
+.colony .panel {
+  position: absolute;
+}
+.colony .top-left {
+  left: 24px;
+  top: 20px;
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+}
+.colony .field-stat i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #477d57;
+}
+.colony .summary,
+.colony .place-btn,
+.colony .tool-btn,
+.colony .guide-btn,
+.colony .secondary,
+.colony .primary,
+.colony .drawing button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid #95714f55;
+  border-radius: 10px;
+  background: #fff9eb;
+  color: #473329;
+  font-weight: 700;
+  min-height: 36px;
+  font-size: 12px;
+  padding: 7px 11px;
+}
+.colony .summary,
+.colony .place-btn,
+.colony .top-right > .tool-btn,
+.colony .map-nav,
+.colony .guide-btn,
+.colony .field-stat {
+  box-shadow:
+    0 2px 0 #93653138,
+    0 3px 10px #6c431615;
+}
+.colony .summary {
+  gap: 9px;
+  min-height: 38px;
+}
+.colony .summary span {
+  background: #eee5d3;
+  font:
+    700 11px/19px "Segoe UI",
+    sans-serif;
+  border-radius: 6px;
+  min-width: 22px;
+}
+.colony .top-right {
+  top: 20px;
+  right: 24px;
+  display: flex;
+  gap: 7px;
+}
+.colony .place-btn,
+.colony .primary,
+.colony .drawing button:first-of-type {
+  background: #492b36;
+  color: #fff6dd;
+  border-color: #492b36;
+}
+.colony .place-btn {
+  min-height: 39px;
+  padding: 7px 14px;
+}
+.colony button:hover:not(:disabled) {
+  filter: brightness(0.965);
+}
+.colony button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.colony .bottom-left {
+  bottom: 20px;
+  left: 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.colony .field-stat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff6e4e8;
+  border: 1px solid #95714f55;
+  border-radius: 9px;
+  min-height: 35px;
+  padding: 6px 12px;
+  color: #735941;
+  font-size: 11px;
+  font-weight: 650;
+}
+.colony .field-stat b {
+  color: #4e342c;
+  font-size: 13px;
+}
+.colony .field-stat em {
+  height: 12px;
+  width: 1px;
+  background: #d7c5a8;
+  margin: 0 2px;
+}
+.colony .guide-btn {
+  width: 33px;
+  min-height: 33px;
+  border-radius: 100%;
+  font:
+    700 16px Georgia,
+    serif;
+}
+.colony .map-nav {
+  right: 24px;
+  bottom: 20px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  background: #fff8e7;
+  border: 1px solid #95714f60;
+  padding: 3px;
+}
+.colony .map-nav .tool-btn {
+  background: none;
+  border: 0;
+  min-height: 32px;
+  min-width: 33px;
+  padding: 5px;
+}
+.colony .map-nav > span {
+  height: 16px;
+  width: 1px;
+  background: #d9c7a7;
+  margin: 0 3px;
+}
+.colony .map-nav output {
+  min-width: 42px;
+  text-align: center;
+  font:
+    700 12px/1 "Segoe UI",
+    sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.colony .map-hint {
+  bottom: 27px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  font-weight: 650;
+  color: #644724;
+  text-shadow: 0 1px #faca78;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.colony .map-hint b {
+  padding: 0 5px;
+}
+.colony .panel {
+  right: 24px;
+  top: 72px;
+  width: min(335px, calc(100% - 48px));
+  max-height: calc(100% - 138px);
+  overflow-y: auto;
+  background: #fffbf1f7;
+  border: 1px solid #c9a777;
+  border-radius: 16px;
+  box-shadow: 0 8px 30px #70411830;
+  scrollbar-width: thin;
+  backdrop-filter: blur(8px);
+}
+.colony .panel-list {
+  left: 24px;
+  right: auto;
+  top: 72px;
+}
+.colony .panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 17px 17px 10px;
+}
+.colony .panel-head h2 {
+  font-size: 17px;
+  line-height: 1.5;
+  margin: 0;
+}
+.colony .panel-head small {
+  display: block;
+  color: #806a52;
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+.colony .panel-head small span {
+  padding: 0 4px;
+  color: #bfa383;
+}
+.colony .panel-head .tool-btn {
+  background: transparent;
+  border: 0;
+  min-height: 26px;
+  padding: 3px;
+}
+.colony .panel form,
+.colony .task-body,
+.colony .guide,
+.colony .profile-more {
+  padding: 0 17px 18px;
+}
+.colony .panel form {
+  display: grid;
+  gap: 12px;
+}
+.colony .panel label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 650;
+  color: #635346;
+}
+.colony .panel input:not([type="checkbox"]),
+.colony .panel select,
+.colony .panel textarea {
+  border: 1px solid #cfbfa7;
+  background: #fffdf7;
+  border-radius: 6px;
+  padding: 7px 8px;
+  width: 100%;
+  font-size: 13px;
+  min-width: 0;
+}
+.colony .panel textarea {
+  resize: vertical;
+}
+.colony .form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.colony .panel fieldset {
+  border: 1px solid #d9c8ad;
+  border-radius: 7px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  padding: 7px;
+}
+.colony .panel legend {
+  font-size: 12px;
+}
+.colony .panel fieldset label {
+  display: inline-flex;
+  flex-direction: row;
+}
+.colony .primary,
+.colony .secondary {
+  width: 100%;
+}
+.colony .primary {
+  min-height: 39px;
+  font-size: 13px;
+}
+.colony .secondary {
+  background: #f7eedc;
+}
+.colony .task-meta,
+.colony .actions {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+.colony .task-meta span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  background: #efe9d9;
+  border-radius: 5px;
+  padding: 3px 6px;
+}
+.colony .task-meta .risk {
+  color: #933d2a;
+  background: #f8dfc8;
+}
+.colony .risk-text,
+.colony .requirement,
+.colony .guide p {
+  font-size: 12px;
+  line-height: 1.7;
+  margin: 10px 0;
+}
+.colony .risk-text {
+  color: #96402c;
+}
+.colony .progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  margin: 13px 0 5px;
+  color: #756453;
+}
+.colony .track {
+  background: #e4d9c5;
+  height: 4px;
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 0 0 14px;
+}
+.colony .track i {
+  display: block;
+  height: 100%;
+  background: #559c8c;
+}
+.colony .actions {
+  margin-top: 7px;
+}
+.colony .actions:empty {
+  margin: 0;
+}
+.colony .actions .tool-btn {
+  flex: 1;
+  min-height: 32px;
+  padding: 4px;
+  font-size: 11px;
+}
+.colony .food-list,
+.colony .role-list {
+  padding: 0 9px 10px;
+  display: grid;
+  gap: 2px;
+}
+.colony .food-list button,
+.colony .role-list button {
+  display: flex;
+  text-align: left;
+  align-items: center;
+  gap: 9px;
+  border: 0;
+  background: transparent;
+  border-radius: 7px;
+  padding: 8px;
+  min-height: 37px;
+}
+.colony .food-list button:hover,
+.colony .role-list button:hover,
+.colony .role-list .current {
+  background: #f0e7d3;
+}
+.colony .food-list b {
+  font-size: 12px;
+}
+.colony .food-list small {
+  display: block;
+  color: #776552;
+  font-size: 10px;
+  margin-top: 2px;
+}
+.colony .food-list button > svg,
+.colony .role-list button > svg {
+  margin-left: auto;
+}
+.colony .food-symbol {
+  display: grid;
+  place-items: center;
+  width: 29px;
+  height: 29px;
+  flex: none;
+  background: #f4e6c7;
+  border-radius: 7px;
+  font: 800 18px/1 sans-serif;
+  color: #a48351;
+}
+.colony .food-symbol.chocolate {
+  background: #ebd2bf;
+  color: #8e4b35;
+}
+.colony .food-symbol.lollipop {
+  background: #f7d8cb;
+  color: #d75a41;
+}
+.colony .food-symbol.bonbon,
+.colony .food-symbol.cookie {
+  background: #f4deb1;
+  color: #b57932;
+}
+.colony .role-list button {
+  font-size: 13px;
+}
+.colony .role-list span,
+.colony .profile-more p,
+.colony .guide small {
+  font-size: 12px;
+  color: #796953;
+}
+.colony .profile-more p {
+  display: flex;
+  justify-content: space-between;
+  margin: 13px 0 0;
+}
+.colony .guide small {
+  font-size: 11px;
+}
+.colony .notice,
+.colony .drawing {
+  left: 50%;
+  transform: translateX(-50%);
+  background: #fff9e9;
+  color: #4c382b;
+  box-shadow: 0 3px 16px #71441930;
+  border: 1px solid #b38c60;
+  border-radius: 10px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 4;
+}
+.colony .notice {
+  bottom: 64px;
+  padding: 8px 13px;
+  pointer-events: none;
+}
+.colony .notice.error {
+  background: #fff0e6;
+  color: #993e2b;
+}
+.colony .drawing {
+  bottom: 18px;
+  padding: 6px 10px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.colony .drawing button {
+  font-size: 11px;
+  padding: 4px 8px;
+  min-height: 28px;
+}
+@media (max-width: 900px) {
+  .colony .map-hint {
+    display: none;
+  }
+  .colony .org-stats {
+    gap: 14px;
+  }
+  .colony .colony-header {
+    gap: 13px;
+    padding: 0 16px;
+  }
+  .colony .org-stats div {
+    display: grid;
+    gap: 0;
+  }
+  .colony .org-stats strong {
+    font-size: 13px;
+  }
+  .colony .top-left,
+  .colony .bottom-left {
+    left: 14px;
+  }
+  .colony .top-right,
+  .colony .map-nav,
+  .colony .panel {
+    right: 14px;
+  }
+}
+@media (max-width: 640px) {
+  .colony .colony-header {
+    height: 55px;
+    gap: 8px;
+  }
+  .colony .wordmark {
+    font-size: 16px;
+    gap: 4px;
+  }
+  .colony .wordmark svg {
+    width: 26px;
+  }
+  .colony .header-divider,
+  .colony .colony-header h1,
+  .colony .map-hint {
+    display: none;
+  }
+  .colony .profile-btn {
+    padding-left: 7px;
+  }
+  .colony .org-stats {
+    gap: 7px;
+  }
+  .colony .org-stats strong {
+    font-size: 11px;
+  }
+  .colony .drawing {
+    bottom: 64px;
+  }
+}
+.colony .field-annotations {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+}
+.colony .field-annotations > svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.colony .field-annotations path {
+  fill: none;
+  stroke-width: 1.25;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.colony .field-annotations circle {
+  stroke: #fff2d6;
+  stroke-width: 1;
+}
+.colony .field-note {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+  padding: 4px 10px;
+  overflow: hidden;
+  background: #fffaed;
+  color: #43322c;
+  border: 1px solid #bf995f;
+  border-left: 3px solid var(--ink);
+  border-radius: 8px;
+  box-shadow: 0 2px 5px #74481c23;
+  line-height: 1.18;
+}
+.colony .field-note small {
+  color: var(--ink);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.colony .field-note strong {
+  font-size: 13px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+.colony .field-note span:empty {
+  display: none;
+}
+.colony .note-food strong,
+.colony .note-ant strong {
+  display: block;
+  line-height: 16px;
+}
+.colony .note-ant {
+  background: #f1f7e8;
+  border-color: #85a48a;
+  border-left-color: var(--ink);
+}
+.colony .note-area {
+  border: 1px solid #b28e5b;
+  border-radius: 12px;
+  padding: 5px 6px 5px 52px;
+  gap: 3px;
+  box-shadow: 0 3px 10px #774c2426;
+}
+.colony .note-area:before {
+  content: "";
+  position: absolute;
+  left: 8px;
+  top: 6px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: conic-gradient(var(--ink) 0 var(--angle), #e7dac2 var(--angle) 360deg);
+}
+.colony .note-area strong {
+  position: absolute;
+  left: 12px;
+  top: 10px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #fff9e9;
+  font:
+    750 10px "Segoe UI",
+    sans-serif;
+  color: var(--ink);
+}
+.colony .note-area small {
+  color: #46382d;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.colony-integrated .note-food strong {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+}
+.colony .note-area span {
+  font-size: 10px;
+  white-space: nowrap;
+  color: #675741;
+}
+.colony .note-line {
+  background: #f6eacf;
+  border: 1px dashed #977442;
+  border-radius: 6px;
+}
+.colony .viewpoint {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 6px;
+  font-size: 11px;
+  color: #604c3d;
+}
+.colony .viewpoint select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+.colony .viewpoint:focus-within {
+  outline: 2px solid #397d72;
+  border-radius: 4px;
+}
+.colony .new-work-detail {
+  font-size: 12px;
+  color: #66523e;
+}
+.colony .new-work-detail summary {
+  cursor: pointer;
+  font-weight: 650;
+}
+.colony .new-work-detail[open] label {
+  margin-top: 7px;
+}

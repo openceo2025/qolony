@@ -1,0 +1,37 @@
+templates:
+  - title: ECR対応
+    rows:
+      - task_name: 対策方針決定
+        ratio: 20
+      - task_name: IA更新
+        ratio: 20
+      - task_name: ミニFMEA作成
+        ratio: 20
+      - task_name: 図面作成
+        ratio: 20
+      - task_name: 設変発行ECR回答
+        ratio: 20
+
+  - title: IAリリース
+    rows:
+      - task_name: 対象アイテム抽出
+        ratio: 20
+      - task_name: オーナーチェンジ
+        ratio: 5
+      - task_name: チェックメイト
+        ratio: 70
+      - task_name: フロー承認
+        ratio: 5
+
+  - title: 設計検討
+    rows:
+      - task_name: 検討条件の整理
+        ratio: 20
+      - task_name: ALT案の作成
+        ratio: 20
+      - task_name: QCD比較と部内整合
+        ratio: 20
+      - task_name: IA作成
+        ratio: 20
+      - task_name: 設計の記録残し
+        ratio: 20
