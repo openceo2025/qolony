@@ -47,10 +47,16 @@ PowerShell -ExecutionPolicy Bypass -File 'D:\QOLONY_UPDATE\bundle\update_qolony_
 - `C:\qolony\backend\data\iquavis_link_targets.xlsx` があれば、新しいアプリへそのまま引き継ぐ
 - データベースには触れない
 
+引き継いだときは `Kept your settings` / `Kept your start options` / `Previous app` の行が出ます。
+これらが出ないのは、`C:\qolony` に前の版がなかったときです。今までの DB を使うなら、起動する前に
+下の「起動の設定」で `QOLONY_DB_PATH` を書き、設定ファイルを `C:\QOLONY_DATA\settings.yaml` に置きます。
+
 ## 3. 起動する
 
-`C:\qolony\start_qolony.bat` をダブルクリックします。ブラウザーで `http://localhost:8000/` を開きます。
+`C:\qolony\start_qolony.bat` をダブルクリックします。黒いウィンドウが開きます（使っている間は閉じません）。
 
+- 2行目の `data:` が使いたいデータベースになっているか確かめます。違っていたら `Ctrl+C` で止めて、「起動の設定」を直します。
+- `startup: QOLONY is ready` と `Application startup complete.` が出たら起動完了です。ブラウザーで `http://localhost:8000/` を開きます。
 - 最初の起動で、データベースの形が新しい版に合わせて自動で更新されます（今までのデータは消えません）。
 - 新しく入れた場合は `C:\QOLONY_DATA\qolony.db` が作られます。メンバーは設定ファイルの `users.members` から作られます。
   自分たちの設定にするときは、`C:\qolony\backend\config\settings.yaml` を `C:\QOLONY_DATA\settings.yaml` へ写して書き換えます。

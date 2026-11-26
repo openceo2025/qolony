@@ -23,6 +23,8 @@ def run_migrations(db_path: Path, project_root: Path) -> None:
     cfg = Config(str(project_root / "alembic.ini"))
     cfg.set_main_option("script_location", str(project_root / "alembic"))
     cfg.set_main_option("sqlalchemy.url", build_sqlite_url(db_path))
+    # ログ設定は呼び出し側（アプリ起動）のものを使う。alembic/env.py 参照。
+    cfg.attributes["configure_logger"] = False
     command.upgrade(cfg, "head")
 
 

@@ -600,6 +600,7 @@ async def _startup() -> None:
     _run_guarded_task_mutation(get_runtime().service.finalize_daily_actuals_if_due)
     logger.info("startup: daily actual finalize check completed")
     background_task = asyncio.create_task(_background_loop())
+    logger.info("startup: QOLONY is ready")
 
 
 @app.on_event("shutdown")

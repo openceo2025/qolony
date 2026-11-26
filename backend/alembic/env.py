@@ -15,7 +15,10 @@ from app.tms_core.db.models import Base
 
 config = context.config
 
-if config.config_file_name is not None:
+# アプリの起動中に呼ばれたときはログ設定に触れない。fileConfig は既存のロガーを無効化し
+# root を WARN にするため、移行の後の起動ログ（uvicorn の起動完了を含む）が全部消え、
+# 止まっているように見えていた。alembic コマンドから直接動かすときだけ設定する。
+if config.config_file_name is not None and config.attributes.get("configure_logger", True):
     fileConfig(config.config_file_name)
 
 target_metadata = Base.metadata
