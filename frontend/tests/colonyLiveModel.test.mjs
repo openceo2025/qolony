@@ -33,31 +33,44 @@ const task = (Id, ParentTaskId = null, fields = {}) => ({
 });
 const user = { Id: "u1", Name: "テスト担当", IsActive: true, IsTopManager: false };
 
-test("深さで種類が決まる: 角砂糖1階層・包みキャンディー2階層・板チョコ3階層", () => {
-  assert.deepEqual([0, 1, 2, 3].map(kindForHeight), ["sugar", "sugar", "bonbon", "chocolate"]);
+test("深さで種類が決まる: かけら・角砂糖1階層・包みキャンディー2階層・板チョコ3階層", () => {
+  assert.deepEqual([0, 1, 2, 3, 5].map((h) => kindForHeight(h)), ["crumb", "sugar", "bonbon", "chocolate", "chocolate"]);
+  // 巣の外で置いたお菓子は、置いたときの大きさより小さく見せない（まだ割っていない板チョコ）。
+  assert.equal(kindForHeight(0, 3), "chocolate");
+  assert.equal(kindForHeight(2, 1), "bonbon");
   const rows = [
-    task("cube"),
+    task("area"),
+    task("crumb", "area"),
+    task("cube", "area"),
     task("cube-1", "cube"),
-    task("candy"),
+    task("candy", "area"),
     task("candy-1", "candy"),
     task("candy-1-1", "candy-1"),
-    task("bar"),
+    task("bar", "area"),
     task("bar-1", "bar"),
     task("bar-1-1", "bar-1"),
     task("bar-1-1-1", "bar-1-1"),
+    task("placed", "area", { ColonySize: 2 }),
   ];
   const { districts } = planSweets(rows);
   assert.deepEqual(
-    districts.map((d) => [d.root.Id, d.sweets.map((s) => s.kind)]),
+    districts.map((d) => [d.root.Id, d.sweets.map((s) => [s.root.Id, s.kind])]),
     [
-      ["cube", ["sugar"]],
-      ["candy", ["bonbon"]],
-      ["bar", ["chocolate"]],
+      [
+        "area",
+        [
+          ["crumb", "crumb"],
+          ["cube", "sugar"],
+          ["candy", "bonbon"],
+          ["bar", "chocolate"],
+          ["placed", "bonbon"],
+        ],
+      ],
     ],
   );
 });
 
-test("深さ3を超える上位は区画になり、その下の部分木がお菓子になる", () => {
+test("エリア（一番上のタスク）はお菓子にせず、深さ3を超える仕事はたどってお菓子にする", () => {
   const rows = [
     task("project"),
     task("phase", "project"),
@@ -66,21 +79,27 @@ test("深さ3を超える上位は区画になり、その下の部分木がお�
     task("bar-1-1", "bar-1"),
     task("bar-1-1-1", "bar-1-1"),
     task("loose", "phase"),
+    task("alone"),
   ];
   const { districts } = planSweets(rows);
-  assert.equal(districts.length, 1);
+  assert.equal(districts.length, 2);
   assert.equal(districts[0].root.Id, "project");
   assert.deepEqual(
     districts[0].sweets.map((s) => [s.root.Id, s.kind]),
     [
       ["bar", "chocolate"],
-      ["loose", "sugar"],
+      ["loose", "crumb"],
     ],
+  );
+  // 子のない一番上のタスクは、そのまま1つのお菓子になる。
+  assert.deepEqual(
+    districts[1].sweets.map((s) => [s.root.Id, s.kind]),
+    [["alone", "crumb"]],
   );
 });
 
 test("割れ方は数だけ大まかに合わせる。1階層は10まで、多い末端はまとめて描く", () => {
-  const many = [task("cube"), ...Array.from({ length: 13 }, (_, i) => task("c" + i, "cube"))];
+  const many = [task("area"), task("cube", "area"), ...Array.from({ length: 13 }, (_, i) => task("c" + i, "cube"))];
   const [sweet] = planSweets(many).districts[0].sweets;
   assert.equal(sweet.bits.groups.length, 10);
   assert.equal(sweet.bits.leaves, 13);
@@ -90,7 +109,8 @@ test("割れ方は数だけ大まかに合わせる。1階層は10まで、多�
 
 test("完了は欠け、着手はアリが食べ、未着手だけの人は待ち、完了だけの人は運ぶ", () => {
   const rows = [
-    task("bar"),
+    task("area"),
+    task("bar", "area"),
     task("a", "bar", { Status: "DuringStart", AssigneeUserId: "eater" }),
     task("b", "bar", { AssigneeUserId: "eater" }),
     task("c", "bar", { AssigneeUserId: "waiter" }),
@@ -119,30 +139,31 @@ test("完了は欠け、着手はアリが食べ、未着手だけの人は待�
 
 test("地図にはお菓子だけを置く。食べ尽くしたお菓子と同期対象外は既定で描かない", () => {
   const rows = [
-    task("root", { ProgressRate: 67 }),
-    task("leaf", "root", { ActualManHour: 90 }),
-    task("done", "root", { Status: "Completion" }),
-    task("hidden", "root", { IQuavisSyncExcluded: true }),
-    task("eaten"),
+    task("root", null, { ProgressRate: 67 }),
+    task("sweet", "root"),
+    task("leaf", "sweet", { ActualManHour: 90 }),
+    task("done", "sweet", { Status: "Completion" }),
+    task("hidden", "sweet", { IQuavisSyncExcluded: true }),
+    task("eaten", "root"),
     task("eaten-1", "eaten", { Status: "Completion" }),
   ];
   const { world, positions, foodOf } = buildProjectColony(rows, [user], [], user.Id, null, false);
   assert.deepEqual(
     world.foods.map((f) => f.id),
-    ["root"],
+    ["sweet"],
   );
   const food = world.foods[0];
   assert.equal(food.kind, "sugar");
   assert.equal(food.detail.bookedMH, 1.5);
   assert.deepEqual(positions.get("leaf"), { x: food.x, y: food.y });
-  assert.equal(foodOf.get("leaf"), "root");
+  assert.equal(foodOf.get("leaf"), "sweet");
   assert.equal(positions.has("hidden"), false);
   assert.ok(positions.has("eaten-1"), "食べ尽くしたお菓子のタスクも一覧から区画へ寄れる");
   assert.equal(world.delivered, 2);
   const all = buildProjectColony(rows, [user], [], user.Id, null, true);
   assert.deepEqual(
     all.world.foods.map((f) => f.id),
-    ["root", "eaten"],
+    ["sweet", "eaten"],
   );
 });
 

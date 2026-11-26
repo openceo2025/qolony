@@ -28,9 +28,11 @@ export const roles = [
     .filter((member) => member.carrier)
     .map(({ id, name }) => ({ id, name, role: "従業員", max: 2, accessory: "scarf" }) as const),
 ] as const;
-export type Accessory = "scarf" | "cap" | "bow";
+/** scarf/cap/bow は PoC の飾り。cigar 以下は巣の役職（社長=葉巻・課長=ネクタイ・係長=黄ヘルメット・一般=白ヘルメット）。 */
+export type Accessory = "scarf" | "cap" | "bow" | "cigar" | "tie" | "helmet-yellow" | "helmet-white";
 export const kinds = ["sugar", "bonbon", "cookie", "chocolate", "lollipop"] as const;
-export type Kind = (typeof kinds)[number];
+/** crumb（かけら）は巣の外で一般が置く、分解しない1つの仕事。PoC の置き場メニューには出さない。 */
+export type Kind = (typeof kinds)[number] | "crumb";
 export interface WorkDetail {
   input: string;
   output: string;
@@ -57,6 +59,7 @@ export const sweets: Record<Kind, string> = {
   cookie: "ビスケット",
   chocolate: "板チョコ",
   lollipop: "ぐるぐるキャンディー",
+  crumb: "かけら",
 };
 export interface Food extends Point {
   id: string;
@@ -242,7 +245,7 @@ export function makeFood(id: string, name: string, kind: Kind, p: Point, due: nu
     kind,
     ...p,
     due,
-    weight: kinds.indexOf(kind) + 1,
+    weight: kind === "crumb" ? 1 : kinds.indexOf(kind) + 1,
     owner: null,
     since: null,
     progress: 0,

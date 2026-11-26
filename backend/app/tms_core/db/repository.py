@@ -13,6 +13,9 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from .models import (
     AppState,
+    ColonyPolicy,
+    ColonyTeam,
+    ColonyTeamMember,
     DailyAttendance,
     DailyProgressSnapshot,
     DailyTaskActual,
@@ -1548,8 +1551,141 @@ class TmsRepository:
             except Exception:
                 return []
 
+    # ---- 巣（組織）: 役職・部屋・所属・方針 ----
 
+    def set_user_colony_role(self, user_id: str, role: str) -> None:
+        with self._session() as session:
+            user = session.get(User, user_id)
+            if user is None:
+                raise ValueError("user not found")
+            user.ColonyRole = role
 
+    def list_colony_teams(self) -> list[ColonyTeam]:
+        with self._session() as session:
+            return session.scalars(
+                select(ColonyTeam).order_by(ColonyTeam.DisplayOrder, ColonyTeam.CreateDate, ColonyTeam.Id)
+            ).all()
 
+    def get_colony_team(self, team_id: str) -> ColonyTeam | None:
+        with self._session() as session:
+            return session.get(ColonyTeam, team_id)
 
+    def create_colony_team(
+        self,
+        *,
+        name: str,
+        parent_team_id: str | None,
+        leader_user_id: str | None,
+        emblem: str,
+    ) -> ColonyTeam:
+        with self._session() as session:
+            order = session.scalar(
+                select(func.coalesce(func.max(ColonyTeam.DisplayOrder), 0)).where(
+                    ColonyTeam.ParentTeamId.is_(None)
+                    if parent_team_id is None
+                    else ColonyTeam.ParentTeamId == parent_team_id
+                )
+            )
+            team = ColonyTeam(
+                Id=str(uuid4()),
+                Name=name,
+                ParentTeamId=parent_team_id,
+                LeaderUserId=leader_user_id,
+                Emblem=emblem,
+                DisplayOrder=int(order or 0) + 1,
+            )
+            session.add(team)
+            session.flush()
+            session.refresh(team)
+            return team
 
+    def update_colony_team(self, team_id: str, **fields: Any) -> None:
+        allowed = {"Name", "ParentTeamId", "LeaderUserId", "Emblem"}
+        with self._session() as session:
+            team = session.get(ColonyTeam, team_id)
+            if team is None:
+                raise ValueError("team not found")
+            for key, value in fields.items():
+                if key not in allowed:
+                    raise ValueError(f"unknown team field: {key}")
+                setattr(team, key, value)
+
+    def delete_colony_team(self, team_id: str) -> None:
+        with self._session() as session:
+            session.execute(sa.delete(ColonyTeamMember).where(ColonyTeamMember.TeamId == team_id))
+            team = session.get(ColonyTeam, team_id)
+            if team is not None:
+                session.delete(team)
+
+    def list_colony_team_members(self) -> list[ColonyTeamMember]:
+        with self._session() as session:
+            return session.scalars(
+                select(ColonyTeamMember).order_by(ColonyTeamMember.CreateDate, ColonyTeamMember.UserId)
+            ).all()
+
+    def add_colony_team_member(self, team_id: str, user_id: str) -> None:
+        with self._session() as session:
+            if session.get(ColonyTeamMember, (team_id, user_id)) is None:
+                session.add(ColonyTeamMember(TeamId=team_id, UserId=user_id))
+
+    def remove_colony_team_member(self, team_id: str, user_id: str) -> None:
+        with self._session() as session:
+            member = session.get(ColonyTeamMember, (team_id, user_id))
+            if member is not None:
+                session.delete(member)
+
+    def list_colony_policies(self) -> list[ColonyPolicy]:
+        with self._session() as session:
+            return session.scalars(select(ColonyPolicy).order_by(ColonyPolicy.CreateDate, ColonyPolicy.Id)).all()
+
+    def create_colony_policy(
+        self,
+        *,
+        kind: str,
+        text: str,
+        x: float,
+        y: float,
+        size: float,
+        points: list[list[float]],
+        author_user_id: str,
+    ) -> ColonyPolicy:
+        with self._session() as session:
+            policy = ColonyPolicy(
+                Id=str(uuid4()),
+                Kind=kind,
+                Text=text,
+                X=x,
+                Y=y,
+                Size=size,
+                PointsJson=json.dumps(points),
+                AuthorUserId=author_user_id,
+            )
+            session.add(policy)
+            session.flush()
+            session.refresh(policy)
+            return policy
+
+    def update_colony_policy(self, policy_id: str, *, text: str | None, x: float | None, y: float | None) -> None:
+        with self._session() as session:
+            policy = session.get(ColonyPolicy, policy_id)
+            if policy is None:
+                raise ValueError("policy not found")
+            if text is not None:
+                policy.Text = text
+            if x is not None:
+                policy.X = x
+            if y is not None:
+                policy.Y = y
+
+    def delete_colony_policy(self, policy_id: str) -> None:
+        with self._session() as session:
+            policy = session.get(ColonyPolicy, policy_id)
+            if policy is not None:
+                session.delete(policy)
+
+    def set_task_colony_size(self, task_id: str, size: int | None) -> None:
+        with self._session() as session:
+            task = session.get(Task, task_id)
+            if task is None:
+                raise ValueError("task not found")
+            task.ColonySize = size

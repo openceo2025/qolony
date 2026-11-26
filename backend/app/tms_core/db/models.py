@@ -32,6 +32,8 @@ class User(Base):
     IQuavisUserId: Mapped[str | None] = mapped_column(String(36), nullable=True, unique=True)
     IsTopManager: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     IsActive: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    # 巣の役職。president(社長) / manager(課長) / chief(係長) / member(一般)。権限は domain/colony.py。
+    ColonyRole: Mapped[str] = mapped_column(String(16), nullable=False, default="member", server_default="member")
     FreeTimeRate: Mapped[float] = mapped_column(Float, nullable=False, default=0.2)
     CreateDate: Mapped[datetime] = mapped_column(
         DateTime(timezone=False), nullable=False, server_default=func.now()
@@ -134,6 +136,8 @@ class Task(Base):
     IQuavisProjectId: Mapped[str | None] = mapped_column(String(36), nullable=True)
     IQuavisLastPulledAt: Mapped[datetime | None] = mapped_column(DateTime(timezone=False), nullable=True)
     IQuavisLastPushedAt: Mapped[datetime | None] = mapped_column(DateTime(timezone=False), nullable=True)
+    # 巣の外で置いたお菓子の大きさ（0=かけら〜3=板チョコ）。置いた人の役職で上限が決まる。iQUAVISへは送らない。
+    ColonySize: Mapped[int | None] = mapped_column(Integer, nullable=True)
     # 同時編集が競合したとき「誰の変更とぶつかったか」を相手に伝えるために持つ。
     UpdatedByUserId: Mapped[str | None] = mapped_column(
         String(36), ForeignKey("Users.Id", ondelete="SET NULL"), nullable=True
@@ -343,3 +347,64 @@ class IQuavisSyncJob(Base):
         DateTime(timezone=False), nullable=False, server_default=func.now(), onupdate=func.now()
     )
 
+
+class ColonyTeam(Base):
+    """巣の中の部屋 = チーム。親をたどると社長室（親なし）に着く。"""
+
+    __tablename__ = "ColonyTeams"
+
+    Id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    Name: Mapped[str] = mapped_column(String(128), nullable=False)
+    ParentTeamId: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("ColonyTeams.Id", ondelete="SET NULL"), nullable=True
+    )
+    # 部屋の主。課長か係長だけがなれる。
+    LeaderUserId: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("Users.Id", ondelete="SET NULL"), nullable=True
+    )
+    Emblem: Mapped[str] = mapped_column(String(32), nullable=False, default="leaf")
+    DisplayOrder: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    CreateDate: Mapped[datetime] = mapped_column(
+        DateTime(timezone=False), nullable=False, server_default=func.now()
+    )
+
+
+class ColonyTeamMember(Base):
+    """チームへの所属。1人が複数のチームを掛け持ちできる。"""
+
+    __tablename__ = "ColonyTeamMembers"
+
+    TeamId: Mapped[str] = mapped_column(
+        String(36), ForeignKey("ColonyTeams.Id", ondelete="CASCADE"), primary_key=True
+    )
+    UserId: Mapped[str] = mapped_column(
+        String(36), ForeignKey("Users.Id", ondelete="CASCADE"), primary_key=True
+    )
+    CreateDate: Mapped[datetime] = mapped_column(
+        DateTime(timezone=False), nullable=False, server_default=func.now()
+    )
+
+
+PolicyText = Text
+
+
+class ColonyPolicy(Base):
+    """社長が地面にチョークで書く方針。見えるだけで、システム上の効力は持たせない。"""
+
+    __tablename__ = "ColonyPolicies"
+
+    Id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    # text = 文字、line = 手書きの線
+    Kind: Mapped[str] = mapped_column(String(16), nullable=False, default="text")
+    Text: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    X: Mapped[float] = mapped_column(Float, nullable=False, default=0)
+    Y: Mapped[float] = mapped_column(Float, nullable=False, default=0)
+    Size: Mapped[float] = mapped_column(Float, nullable=False, default=1)
+    # 属性名 Text が型の Text を隠すので、ここは型を別名で参照する。
+    PointsJson: Mapped[str] = mapped_column(PolicyText, nullable=False, default="[]")
+    AuthorUserId: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("Users.Id", ondelete="SET NULL"), nullable=True
+    )
+    CreateDate: Mapped[datetime] = mapped_column(
+        DateTime(timezone=False), nullable=False, server_default=func.now()
+    )

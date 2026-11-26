@@ -3,12 +3,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 import logging
+import os
 
 from app.iquavis.sync import IQuavisSyncService
 from app.tms_core.config import Settings, load_settings
 from app.tms_core.db.repository import TmsRepository
 from app.tms_core.db.session import create_session_factory, create_sqlite_engine
 from app.tms_core.services.bootstrap import bootstrap_data, run_migrations
+from app.tms_core.services.colony import ColonyService
 from app.tms_core.services.core import TmsService
 
 logger = logging.getLogger(__name__)
@@ -21,11 +23,27 @@ class Runtime:
     service: TmsService
     repository: TmsRepository
     iquavis_sync: IQuavisSyncService
+    colony: ColonyService
+
+
+def settings_path(root_dir: Path) -> Path:
+    """設定ファイルの場所。QOLONY_SETTINGS_PATH があればそれを使う。
+
+    会社の利用者・パスワード・連携設定をアプリのフォルダーの外（運用データ側）に置き、
+    GitHub から入れ替えたアプリで上書きされないようにするため。
+    """
+    configured = os.getenv("QOLONY_SETTINGS_PATH", "").strip()
+    if configured:
+        path = Path(configured)
+        if not path.is_file():
+            raise FileNotFoundError(f"QOLONY_SETTINGS_PATH が指す設定ファイルがありません: {path}")
+        return path
+    return root_dir / "config" / "settings.yaml"
 
 
 def build_runtime(root_dir: Path) -> Runtime:
     logger.info("runtime init: load settings")
-    settings = load_settings(path=root_dir / "config" / "settings.yaml")
+    settings = load_settings(path=settings_path(root_dir), config_dir=root_dir / "config")
 
     configured_db_path = Path(settings.app.db_path)
     if configured_db_path.is_absolute():
@@ -65,4 +83,5 @@ def build_runtime(root_dir: Path) -> Runtime:
         service=service,
         repository=repository,
         iquavis_sync=iquavis_sync,
+        colony=ColonyService(repository=repository, tms=service),
     )

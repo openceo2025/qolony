@@ -35,3 +35,8 @@ dist/
 Thumbs.db
 .vscode/
 .idea/
+
+# Windows bundle output
+deploy_windows/
+qolony_windows*.zip
+qolony_windows*.zip.sha256.txt

@@ -9,7 +9,7 @@ from alembic.config import Config
 from app.tms_core.db.session import build_sqlite_url
 from app.tms_core.services.db_conversion import (
     REVISION_0003,
-    REVISION_0014,
+    REVISION_0015,
     convert_legacy_db,
     read_alembic_revision,
 )
@@ -63,7 +63,7 @@ def test_convert_legacy_db_from_0003_to_head(tmp_path) -> None:
     )
 
     assert result.initial_revision == REVISION_0003
-    assert result.final_revision == result.head_revision == REVISION_0014
+    assert result.final_revision == result.head_revision == REVISION_0015
     assert result.backup_path is not None
     assert result.backup_path.exists()
 
@@ -101,7 +101,7 @@ def test_convert_legacy_db_stamps_when_alembic_version_missing(tmp_path) -> None
     assert result.initial_revision is None
     assert result.inferred_revision == REVISION_0003
     assert result.stamped_revision == REVISION_0003
-    assert result.final_revision == REVISION_0014
+    assert result.final_revision == REVISION_0015
 
 
 
@@ -120,4 +120,4 @@ def test_convert_legacy_db_to_output_keeps_source_intact(tmp_path) -> None:
     assert result.target_path == target_db.resolve()
     assert result.backup_path is None
     assert read_alembic_revision(source_db) == REVISION_0003
-    assert read_alembic_revision(target_db) == REVISION_0014
+    assert read_alembic_revision(target_db) == REVISION_0015

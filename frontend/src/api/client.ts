@@ -1,6 +1,8 @@
 ﻿import type {
   BulkTaskAssigneeResponse,
   BulkTaskFieldsResponse,
+  ColonyContributions,
+  ColonyOrg,
   InfeasibilityResponse,
   IquavisAuthoritativeImportApplyResponse,
   IquavisAuthoritativeImportPreviewResponse,
@@ -76,6 +78,84 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 export const api = {
   health: () => request<{ status: string }>("/api/health"),
   meta: () => request<MetaResponse>("/api/meta"),
+  colonyOrg: (userId: string) => request<ColonyOrg>(`/api/colony/org?user_id=${encodeURIComponent(userId)}`),
+  colonyContributions: (userId: string, yearMonth: string) =>
+    request<ColonyContributions>(
+      `/api/colony/contributions?user_id=${encodeURIComponent(userId)}&year_month=${encodeURIComponent(yearMonth)}`,
+    ),
+  colonySetRole: (userId: string, targetUserId: string, role: string) =>
+    request<{ status: string }>("/api/colony/roles", {
+      method: "POST",
+      body: JSON.stringify({ user_id: userId, target_user_id: targetUserId, role }),
+    }),
+  colonyDigRoom: (userId: string, parentTeamId: string | null, name: string, emblem?: string) =>
+    request<{ status: string; team_id: string }>("/api/colony/rooms", {
+      method: "POST",
+      body: JSON.stringify({ user_id: userId, parent_team_id: parentTeamId, name, emblem: emblem ?? null }),
+    }),
+  colonyUpdateRoom: (
+    userId: string,
+    teamId: string,
+    changes: { name?: string; emblem?: string; leader_user_id?: string; clear_leader?: boolean },
+  ) =>
+    request<{ status: string }>(`/api/colony/rooms/${encodeURIComponent(teamId)}`, {
+      method: "POST",
+      body: JSON.stringify({ user_id: userId, ...changes }),
+    }),
+  colonyFillRoom: (userId: string, teamId: string) =>
+    request<{ status: string }>(`/api/colony/rooms/${encodeURIComponent(teamId)}/fill`, {
+      method: "POST",
+      body: JSON.stringify({ user_id: userId }),
+    }),
+  colonyJoin: (userId: string, teamId: string, memberUserId: string) =>
+    request<{ status: string }>(`/api/colony/rooms/${encodeURIComponent(teamId)}/join`, {
+      method: "POST",
+      body: JSON.stringify({ user_id: userId, member_user_id: memberUserId }),
+    }),
+  colonyLeave: (userId: string, teamId: string, memberUserId: string) =>
+    request<{ status: string }>(`/api/colony/rooms/${encodeURIComponent(teamId)}/leave`, {
+      method: "POST",
+      body: JSON.stringify({ user_id: userId, member_user_id: memberUserId }),
+    }),
+  colonyWritePolicy: (
+    userId: string,
+    policy: { kind: "text" | "line"; text: string; x: number; y: number; size: number; points: number[][] },
+  ) =>
+    request<{ status: string; policy_id: string }>("/api/colony/policies", {
+      method: "POST",
+      body: JSON.stringify({ user_id: userId, ...policy }),
+    }),
+  colonyErasePolicy: (userId: string, policyId: string) =>
+    request<{ status: string }>(`/api/colony/policies/${encodeURIComponent(policyId)}/erase`, {
+      method: "POST",
+      body: JSON.stringify({ user_id: userId }),
+    }),
+  colonyDropSweet: (payload: {
+    user_id: string;
+    area_task_id: string;
+    name: string;
+    size: number;
+    assigned_manhour: number;
+    end_date: string;
+  }) =>
+    request<{ status: string; task_id: string; warnings: string[] }>("/api/colony/sweets", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  colonyCreateArea: (userId: string, name: string, endDate: string) =>
+    request<{ status: string; task_id: string; warnings: string[] }>("/api/colony/areas", {
+      method: "POST",
+      body: JSON.stringify({ user_id: userId, name, end_date: endDate }),
+    }),
+  colonyAssign: (userId: string, taskId: string, assigneeUserId: string, expectedRevision?: string) =>
+    request<TaskMutationResult>(`/api/colony/tasks/${encodeURIComponent(taskId)}/assign`, {
+      method: "POST",
+      body: JSON.stringify({
+        user_id: userId,
+        assignee_user_id: assigneeUserId,
+        expected_revision: expectedRevision ?? null,
+      }),
+    }),
   verifyPassword: (userId: string, password: string) =>
     request<{ ok: boolean }>("/api/auth/verify", {
       method: "POST",

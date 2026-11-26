@@ -35,6 +35,7 @@ const iconNames: Record<Kind, string> = {
   cookie: "●",
   chocolate: "▦",
   lollipop: "◎",
+  crumb: "▪",
 };
 function ToolButton({
   icon,

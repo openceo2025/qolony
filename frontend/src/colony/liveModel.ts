@@ -20,6 +20,7 @@ function clean(name: string) {
 /** お菓子の当たり判定と吹き出しの基準になる半径。描画（sweetArt.ts）の大きさに合わせる。 */
 export function sweetSize(plan: SweetPlan) {
   const groups = plan.bits.groups.length;
+  if (plan.kind === "crumb") return 22;
   if (plan.kind === "chocolate") return 34 + Math.min(10, groups) * 6;
   if (plan.kind === "bonbon") return 44;
   return 18 + Math.min(10, groups) * 2.5;
@@ -36,7 +37,7 @@ function toFood(plan: SweetPlan, point: Point, byId: Map<string, Task>): Food {
     name: clean(root.Name),
     ...point,
     kind: plan.kind,
-    weight: plan.kind === "chocolate" ? 5 : plan.kind === "bonbon" ? 3 : 1,
+    weight: plan.kind === "chocolate" ? 5 : plan.kind === "bonbon" ? 3 : plan.kind === "sugar" ? 2 : 1,
     due: Number.isFinite(date) ? date : Infinity,
     // お菓子そのものは引っ張らない。アリの動きは crew で描く。
     since: null,
@@ -275,22 +276,26 @@ export function buildProjectColony(
 }
 
 // タスクツリーを「お菓子」にまとめる純粋関数（2026-11-22 決定のルール）。
-// - 角砂糖（規模 小）= 1階層、包みキャンディー（中）= 2階層、板チョコ（大）= 3階層まで分解できる。種類は深さで決まる。
+// - かけら = 分解しない1つの仕事、角砂糖（規模 小）= 1階層、包みキャンディー（中）= 2階層、板チョコ（大）= 3階層。
+//   種類は深さで決まる。巣の外で置いたお菓子は、置いたときの大きさ（ColonySize）より小さくは見せない。
+// - 区画（エリア）= 一番上のタスク。エリアそのものはお菓子にせず、その下の仕事をお菓子にする（2026-11-26）。
 // - 1階層あたりの分割は最大 10。
 // - 見た目は「階層と個数がなんとなく合っている」程度にとどめる。仕事の中身や工数の比はこの画面で表さない。
 // - 末端の状態だけを見る。完了・中止 = 運び去られて欠ける、着手 = アリが食べている。
 
-export type SweetKind = "sugar" | "bonbon" | "chocolate";
+export type SweetKind = "crumb" | "sugar" | "bonbon" | "chocolate";
 export type BitState = "open" | "active" | "done";
 
 export const sweetRules: Record<SweetKind, { label: string; scale: string; levels: number }> = {
+  crumb: { label: "かけら", scale: "最小", levels: 0 },
   sugar: { label: "角砂糖", scale: "小", levels: 1 },
   bonbon: { label: "包みキャンディー", scale: "中", levels: 2 },
   chocolate: { label: "板チョコ", scale: "大", levels: 3 },
 };
 export const maxSplit = 10;
 /** 1つの房（チョコなら列、キャンディーなら扇）に描くかけらの上限。超えた分はまとめて1つに描く。 */
-const cellCap: Record<SweetKind, number> = { sugar: 1, bonbon: 4, chocolate: 9 };
+const cellCap: Record<SweetKind, number> = { crumb: 1, sugar: 1, bonbon: 4, chocolate: 9 };
+const kindBySize: SweetKind[] = ["crumb", "sugar", "bonbon", "chocolate"];
 
 export interface SweetBits {
   /** 1階層目の子ごとの、描くかけらの状態。角砂糖は子1つ = かけら1つ。 */
@@ -331,8 +336,10 @@ export function compareWbs(a: Task, b: Task): number {
   return a.Id < b.Id ? -1 : a.Id > b.Id ? 1 : 0;
 }
 
-export function kindForHeight(height: number): SweetKind {
-  return height >= 3 ? "chocolate" : height === 2 ? "bonbon" : "sugar";
+export function kindForHeight(height: number, placedSize?: number | null): SweetKind {
+  const fromHeight = Math.max(0, Math.min(3, height));
+  const placed = placedSize == null ? 0 : Math.max(0, Math.min(3, placedSize));
+  return kindBySize[Math.max(fromHeight, placed)];
 }
 
 function stateOf(task: Task, timer: ActiveTimer | null | undefined): BitState {
@@ -378,7 +385,7 @@ export function planSweets(tasks: Task[], timer?: ActiveTimer | null) {
     !kids(task.Id).length || guard > 8 ? [task] : kids(task.Id).flatMap((child) => leavesOf(child, guard + 1));
 
   function plan(root: Task): SweetPlan {
-    const kind = kindForHeight(heightOf(root.Id));
+    const kind = kindForHeight(heightOf(root.Id), root.ColonySize);
     const firsts = kids(root.Id).length ? kids(root.Id) : [root];
     const leaves = leavesOf(root);
     const groups = firsts.map((first) =>
@@ -412,7 +419,9 @@ export function planSweets(tasks: Task[], timer?: ActiveTimer | null) {
     };
   }
 
-  // 一番上のタスクごとに区画を作る。深さ3以内に収まる部分木をお菓子にする。
+  // 一番上のタスクごとに区画（エリア）を作る。エリアの下の仕事を1つずつお菓子にし、
+  // 深さ3を超える仕事はたどって、深さ3以内に収まる部分木をお菓子にする。
+  // 子のない一番上のタスクは、それ自体を1つのお菓子として区画に置く。
   const districts: DistrictPlan[] = [];
   for (const top of children.get(null) ?? []) {
     const sweets: SweetPlan[] = [];
@@ -420,7 +429,8 @@ export function planSweets(tasks: Task[], timer?: ActiveTimer | null) {
       if (heightOf(task.Id) <= 3 || guard > 64) sweets.push(plan(task));
       else for (const child of kids(task.Id)) visit(child, guard + 1);
     };
-    visit(top, 0);
+    if (kids(top.Id).length) for (const child of kids(top.Id)) visit(child, 1);
+    else sweets.push(plan(top));
     districts.push({ root: top, sweets });
   }
   return { districts, parentIds };

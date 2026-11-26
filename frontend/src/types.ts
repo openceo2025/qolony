@@ -395,6 +395,8 @@ export interface Task {
   IQuavisConflictMessage: string | null;
   PlannedDeliverables: Deliverable[];
   OutputDeliverables: Deliverable[];
+  /** 巣の外で置いたお菓子の大きさ。0=かけら 1=角砂糖 2=包みキャンディー 3=板チョコ。古いタスクは null。 */
+  ColonySize?: number | null;
 }
 
 export interface ActiveTimer {
@@ -573,5 +575,60 @@ export interface SplitChildPayload {
   AssigneeUserId: string;
 }
 
+// ---- 巣（組織）----
 
+export type ColonyRole = "president" | "manager" | "chief" | "member";
 
+export interface ColonyTeam {
+  Id: string;
+  Name: string;
+  ParentTeamId: string | null;
+  LeaderUserId: string | null;
+  Emblem: string;
+  DisplayOrder: number;
+  MemberIds: string[];
+}
+
+export interface ColonyPolicy {
+  Id: string;
+  Kind: "text" | "line";
+  Text: string;
+  X: number;
+  Y: number;
+  Size: number;
+  Points: [number, number][];
+}
+
+export interface ColonyOrg {
+  ViewerRole: ColonyRole;
+  Roles: Record<string, ColonyRole>;
+  RoleLabels: Record<ColonyRole, string>;
+  SweetLabels: Record<string, string>;
+  Emblems: string[];
+  Teams: ColonyTeam[];
+  Policies: ColonyPolicy[];
+  Permissions: {
+    MaxSweetSize: number;
+    WritePolicy: boolean;
+    CreateArea: boolean;
+    AssignOthers: boolean;
+    EditAllTeams: boolean;
+    EditableTeamIds: string[];
+  };
+}
+
+export interface ColonyMonthValue {
+  Month: string;
+  OutputMinutes: number;
+  EffortMinutes: number;
+  WorkSpeed: number;
+  TeachingMinutes: number;
+}
+
+export interface ColonyContributions {
+  Months: string[];
+  People: { UserId: string; Visible: boolean; Months: ColonyMonthValue[] }[];
+  Teams: { TeamId: string; MemberCount: number; Months: ColonyMonthValue[]; PerPersonOutputMinutes: number[] }[];
+  Company: ColonyMonthValue[];
+  CompanyMemberCount: number;
+}

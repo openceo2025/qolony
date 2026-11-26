@@ -1,4 +1,4 @@
-import { ant, artSize, candy, makeSoil, nestBack, nestLip, seeded, stone, tuft } from "./art";
+import { ant, artSize, candy, emblem, makeSoil, nestBack, nestLip, seeded, stone, tuft } from "./art";
 import {
   clamp,
   deadline,
@@ -16,6 +16,8 @@ import type { Accessory, CrewAnt, Food, Point, World } from "./model";
 import { mapAnnotations, roamingProfiles, type AntAnchor } from "./annotations";
 import { drawSweet, drawSweetFar } from "./sweetArt";
 import { carryPose } from "./liveModel";
+import { roleAccessory } from "./nestModel";
+import type { ColonyPolicy, ColonyRole } from "../types";
 
 /** これより引いて見ているときは、アリを点、お菓子を簡単な形で描く（会社規模で重くしないため）。 */
 const farScale = 0.42;
@@ -31,10 +33,24 @@ export interface SceneState {
   actor: string;
   draft: Point[];
   tool: boolean;
+  /** 利用者ID → 巣の役職。アリの飾り（葉巻・ネクタイ・ヘルメット）に使う。 */
+  roles?: Record<string, ColonyRole>;
+  /** 利用者ID → 所属チームの紋章。寄ったときだけアリの頭上に出す。 */
+  emblems?: Map<string, string[]>;
+  /** 社長が地面にチョークで書いた方針。見えるだけ。 */
+  policies?: ColonyPolicy[];
+  /** いま何も担当していない人。巣の入口のまわりで待っている。 */
+  idle?: string[];
 }
 interface Callbacks {
   pick(p: Point, food: string | null): void;
   zoom(z: number): void;
+  /** 巣の入口をクリックした。 */
+  enterNest?(): void;
+  /** このアリをつかんで采配できるか。 */
+  canDragAnt?(owner: string): boolean;
+  /** アリをお菓子の上へ落とした。 */
+  dropAnt?(owner: string, food: string): void;
 }
 export const zoomLimit = { min: 0.25, max: 3.5 };
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
@@ -207,7 +223,24 @@ export function mountScene(
     frame = 0,
     last = 0,
     hover: string | null = null;
-  let drag: { id: number; start: Point; last: Point; moved: boolean } | null = null;
+  let drag: { id: number; start: Point; last: Point; moved: boolean; ant: string | null } | null = null;
+  let active = true;
+  /** 直前のフレームで描いたアリ（つかむための当たり判定）。 */
+  let antSpots: { owner: string; p: Point }[] = [];
+  function antAt(p: Point) {
+    if (base * z < 0.75) return null;
+    let best: string | null = null,
+      bestD = 20;
+    for (const spot of antSpots) {
+      const d = Math.hypot(p.x - spot.p.x, p.y - (spot.p.y - 12));
+      if (d < bestD) {
+        best = spot.owner;
+        bestD = d;
+      }
+    }
+    return best;
+  }
+  const nearNest = (p: Point) => Math.hypot((p.x - nest.x) / 62, (p.y - nest.y) / 34) < 1;
   let pointer: Point | null = null,
     lastZoom = -1;
   let screenAim: Point | null = null;
@@ -267,7 +300,14 @@ export function mountScene(
     if (e.button !== 0 && e.button !== 1) return;
     const p = local(e);
     canvas.focus({ preventScroll: true });
-    drag = { id: e.pointerId, start: p, last: p, moved: false };
+    const grabbed = antAt(toWorld(p));
+    drag = {
+      id: e.pointerId,
+      start: p,
+      last: p,
+      moved: false,
+      ant: grabbed && !read().tool && cb.canDragAnt?.(grabbed) ? grabbed : null,
+    };
     canvas.setPointerCapture(e.pointerId);
   };
   const move = (e: PointerEvent) => {
@@ -276,7 +316,9 @@ export function mountScene(
     pointer = toWorld(p);
     if (drag?.id === e.pointerId) {
       if (distance(p, drag.start) > 4) drag.moved = true;
-      if (drag.moved) {
+      if (drag.moved && drag.ant) {
+        canvas.style.cursor = "grabbing";
+      } else if (drag.moved) {
         cam = bounds({
           x: cam.x - (p.x - drag.last.x) / (z * base),
           y: cam.y - (p.y - drag.last.y) / (z * base),
@@ -288,18 +330,36 @@ export function mountScene(
       drag.last = p;
     } else {
       hover = hit(pointer, Date.now());
-      canvas.style.cursor = read().tool ? "crosshair" : hover ? "pointer" : "grab";
+      const grab = antAt(pointer);
+      canvas.style.cursor = read().tool
+        ? "crosshair"
+        : hover || nearNest(pointer)
+          ? "pointer"
+          : grab && cb.canDragAnt?.(grab)
+            ? "grab"
+            : "default";
     }
   };
   const up = (e: PointerEvent) => {
     if (drag?.id !== e.pointerId) return;
     const click = !drag.moved && e.button === 0;
+    const carried = drag.moved ? drag.ant : null;
     drag = null;
     if (canvas.hasPointerCapture(e.pointerId)) canvas.releasePointerCapture(e.pointerId);
     canvas.style.cursor = read().tool ? "crosshair" : "grab";
+    if (carried) {
+      const food = hit(toWorld(local(e)), Date.now());
+      if (food) cb.dropAnt?.(carried, food);
+      return;
+    }
     if (click) {
       const p = toWorld(local(e));
-      cb.pick(p, hit(p, Date.now()));
+      const food = hit(p, Date.now());
+      if (!food && !read().tool && nearNest(p) && cb.enterNest) {
+        cb.enterNest();
+        return;
+      }
+      cb.pick(p, food);
     }
   };
   const cancel = () => {
@@ -357,6 +417,7 @@ export function mountScene(
   canvas.addEventListener("pointerleave", leave);
   canvas.addEventListener("keydown", key);
   function render(time: number) {
+    if (!active) return;
     const dt = last ? Math.min(70, time - last) : 16;
     last = time;
     const blend = 1 - Math.exp(-dt / 76);
@@ -368,10 +429,12 @@ export function mountScene(
       lastZoom = level;
       cb.zoom(level);
     }
-    const { world, selected, actor, draft, tool } = read(),
+    const { world, selected, actor, draft, tool, roles: colonyRoles, emblems, policies, idle } = read(),
       now = Date.now(),
       t = time * 0.001;
     const ants: AntAnchor[] = [];
+    const spots: { owner: string; p: Point }[] = [];
+    const look = (owner: string): Accessory => roleAccessory[colonyRoles?.[owner] ?? "member"];
     const acc = (id: string): Accessory =>
       world.accessories[id] ?? roles.find((r) => r.id === id)?.accessory ?? "scarf";
     c.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -415,6 +478,35 @@ export function mountScene(
         c.restore();
       }
     });
+    // 社長のチョーク。引いて見るとはっきり、寄ると薄くなる。見えるだけで、何にも効かない。
+    for (const policy of policies ?? []) {
+      const alpha = clamp(1.25 - z * 0.75, 0.18, 0.85);
+      c.save();
+      c.globalAlpha = alpha;
+      c.strokeStyle = "#fffaf0";
+      c.fillStyle = "#fffaf0";
+      c.lineCap = "round";
+      c.lineJoin = "round";
+      if (policy.Kind === "line" && policy.Points.length > 1) {
+        c.lineWidth = 7 * policy.Size;
+        c.beginPath();
+        c.moveTo(policy.Points[0][0], policy.Points[0][1]);
+        for (const [x, y] of policy.Points.slice(1)) c.lineTo(x, y);
+        c.stroke();
+      } else if (policy.Text) {
+        const size = 46 * policy.Size;
+        c.font = `700 ${size}px "Yu Mincho","Hiragino Mincho ProN",serif`;
+        c.textAlign = "center";
+        c.fillText(policy.Text, policy.X, policy.Y);
+        // チョークのかすれ
+        c.globalAlpha = alpha * 0.5;
+        c.fillStyle = "#e9b66a";
+        const r = seeded(policy.Text.length * 31 + Math.round(policy.X));
+        const w = c.measureText(policy.Text).width;
+        for (let i = 0; i < 40; i++) c.fillRect(policy.X - w / 2 + r() * w, policy.Y - size * 0.8 + r() * size, 3, 1.5);
+      }
+      c.restore();
+    }
     for (const [x, y, s, v] of fixtures) if (inView(x, y)) tuft(c, x, y, s, v);
     for (const k of stones) if (inView(k.x, k.y)) stone(c, k.x, k.y, k.s);
     c.save();
@@ -527,23 +619,46 @@ export function mountScene(
       );
     }
     const far = base * z < farScale;
+    /** 現場目線まで寄ったときだけ、所属チームの紋章をアリの頭上に並べる。 */
+    const badges = (owner: string, p: Point) => {
+      if (base * z < 1.25) return;
+      const list = emblems?.get(owner);
+      if (!list?.length) return;
+      const shown = list.slice(0, 3);
+      shown.forEach((name, i) => emblem(c, p.x + (i - (shown.length - 1) / 2) * 11, p.y - 50, 5, name));
+    };
     const crew = world.project?.crew;
     if (crew) {
-      // 運び手の通り道。お菓子ごとに巣までの点線を1本だけ引く。
-      const routes = new Map<string, Point>();
-      for (const a of crew) if (a.mode === "carry" && !routes.has(a.food)) routes.set(a.food, a.point);
-      if (routes.size) {
+      // 巣とお菓子のあいだの道。そのお菓子に通うアリが多いほど太く踏み固められる。
+      const traffic = new Map<string, { p: Point; n: number }>();
+      const foodById = new Map(world.foods.map((f) => [f.id, f]));
+      for (const a of crew) {
+        const food = foodById.get(a.food);
+        if (!food) continue;
+        const entry = traffic.get(a.food) ?? { p: { x: food.x, y: food.y }, n: 0 };
+        entry.n += 1;
+        traffic.set(a.food, entry);
+      }
+      if (traffic.size) {
         c.save();
-        c.strokeStyle = "#7a4a2a38";
-        c.lineWidth = Math.max(2, 1.4 / (base * z));
-        c.setLineDash([3 / (base * z) + 2, 7 / (base * z) + 4]);
         c.lineCap = "round";
-        c.beginPath();
-        for (const p of routes.values()) {
+        for (const { p, n } of traffic.values()) {
+          const mid = {
+            x: (p.x + nest.x) / 2 + (p.y - nest.y) * 0.08,
+            y: (p.y + nest.y) / 2 - (p.x - nest.x) * 0.08,
+          };
+          c.beginPath();
           c.moveTo(nest.x, nest.y);
-          c.lineTo(p.x, p.y);
+          c.quadraticCurveTo(mid.x, mid.y, p.x, p.y);
+          c.strokeStyle = "#a8683a1c";
+          c.lineWidth = Math.max(3 + n * 2.5, 2 / (base * z));
+          c.stroke();
+          c.strokeStyle = "#7a4a2a22";
+          c.lineWidth = Math.max(1, 0.8 / (base * z));
+          c.setLineDash([4, 9]);
+          c.stroke();
+          c.setLineDash([]);
         }
-        c.stroke();
         c.restore();
       }
     }
@@ -690,7 +805,10 @@ export function mountScene(
           c.stroke();
           c.restore();
         }
-        ant(c, p.x, p.y, face, phase, mode, a.owner === actor ? "scarf" : "cap", 0.95);
+        if (drag?.ant === a.owner && drag.moved) continue;
+        ant(c, p.x, p.y, face, phase, mode, look(a.owner), 0.95);
+        spots.push({ owner: a.owner, p });
+        badges(a.owner, p);
         if (load) {
           // 運び去るかけら
           c.fillStyle = "#96503a";
@@ -715,6 +833,34 @@ export function mountScene(
         c.fill();
       }
     }
+    // 何も担当していないアリは、巣の入口のまわりで待つ。つかんでお菓子へ運べば采配できる。
+    if (world.project && idle?.length && !far) {
+      const list = idle.slice(0, 40);
+      list.forEach((owner, i) => {
+        if (drag?.ant === owner && drag.moved) return;
+        const angle = (i / list.length) * Math.PI * 2 + 0.4;
+        const ring = 92 + (i % 2) * 22;
+        const p = { x: nest.x + Math.cos(angle) * ring * 1.3, y: nest.y + Math.sin(angle) * ring * 0.55 + 10 };
+        if (!inView(p.x, p.y, 40)) return;
+        const u = (t * 0.2 + i * 0.37) % 1;
+        ant(c, p.x, p.y, Math.cos(angle) > 0 ? -1 : 1, u < 0.15 ? t * 12 : t * 2.4 + i, u < 0.15 ? "walk" : "idle", look(owner), 0.92);
+        spots.push({ owner, p });
+        ants.push({ id: "idle-" + owner, profile: owner, p: { x: p.x, y: p.y - 22 }, doing: "担当待ち" });
+        badges(owner, p);
+      });
+    }
+    // つかんでいるアリ
+    if (drag?.ant && drag.moved && pointer) {
+      c.save();
+      c.globalAlpha = 0.25;
+      c.fillStyle = "#000";
+      c.beginPath();
+      c.ellipse(pointer.x, pointer.y + 12, 15, 4, 0, 0, Math.PI * 2);
+      c.fill();
+      c.restore();
+      ant(c, pointer.x, pointer.y - 6, 1, t * 16, "walk", look(drag.ant), 1.1);
+    }
+    antSpots = spots;
     for (const e of world.events) {
       const a = (now - e.at) / 750;
       if (e.type !== "split" || a < 0 || a >= 1) continue;
@@ -785,6 +931,48 @@ export function mountScene(
   return {
     zoom: setZoom,
     home,
+    setActive(on: boolean) {
+      if (on === active) return;
+      active = on;
+      last = 0;
+      cancelAnimationFrame(frame);
+      if (on) frame = requestAnimationFrame(render);
+    },
+    /** 画面上の点（キャンバス左上基準）をワールド座標へ。 */
+    worldAt(screen: Point) {
+      return toWorld(screen);
+    },
+    screenAt(p: Point) {
+      return { x: width / 2 + (p.x - cam.x) * base * z, y: height / 2 + (p.y - cam.y) * base * z };
+    },
+    /** その点を囲んでいるエリア（一番上のタスク）の ID。 */
+    areaAt(p: Point) {
+      for (const mark of read().world.marks) {
+        if (!mark.team || mark.points.length < 3) continue;
+        const xs = mark.points.map((q) => q.x),
+          ys = mark.points.map((q) => q.y);
+        if (p.x >= Math.min(...xs) && p.x <= Math.max(...xs) && p.y >= Math.min(...ys) && p.y <= Math.max(...ys))
+          return mark.team;
+      }
+      return null;
+    },
+    policyAt(p: Point) {
+      for (const policy of read().policies ?? []) {
+        if (policy.Kind !== "text") continue;
+        const size = 46 * policy.Size;
+        c.font = `700 ${size}px serif`;
+        const w = c.measureText(policy.Text).width;
+        if (Math.abs(p.x - policy.X) < w / 2 && p.y < policy.Y + size * 0.2 && p.y > policy.Y - size) return policy.Id;
+      }
+      return null;
+    },
+    /** 巣から出てきたとき。入口に寄った状態から引いていく。 */
+    leaveNest() {
+      cam = { x: nest.x, y: nest.y };
+      z = 3;
+      target = 1;
+      goal = bounds({ x: nest.x, y: nest.y });
+    },
     viewpoint(level: number) {
       screenAim = null;
       target = level === 0.27 ? overview() : level;

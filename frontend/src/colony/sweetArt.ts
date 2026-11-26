@@ -177,6 +177,11 @@ export function drawSweetFar(c: Ctx, food: Food) {
   }
   const remain = groups.filter((g) => left(g)).length;
   if (!remain) return;
+  if (food.kind === "crumb") {
+    c.fillStyle = "#8a4a2e";
+    c.fillRect(-7, -9, 14, 9);
+    return;
+  }
   const side = 12 + Math.sqrt(remain) * 7;
   c.fillStyle = "#fff6d9";
   c.fillRect(-side / 2, -side - 2, side, side);
@@ -184,6 +189,19 @@ export function drawSweetFar(c: Ctx, food: Food) {
 
 export function drawSweet(c: Ctx, food: Food, t: number) {
   const groups = food.bits?.groups ?? [["open"]];
+  if (food.kind === "crumb") {
+    const state = groups[0]?.[0] ?? "open";
+    if (state === "done") crumbs(c, 0, 0, "#82432d");
+    else {
+      oval(c, 2, 4, 18, 4, "#85532230");
+      c.save();
+      c.scale(1.7, 1.7);
+      if (state === "active") c.rotate(Math.sin(t * 6) * 0.05);
+      candy(c, "crumb", 0, false);
+      c.restore();
+    }
+    return;
+  }
   if (food.kind === "chocolate") chocolate(c, groups);
   else if (food.kind === "bonbon") bonbon(c, groups, t);
   else sugarPile(c, groups, t);

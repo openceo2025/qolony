@@ -27,6 +27,7 @@ REVISION_0011 = "0011_add_member_identity_fields"
 REVISION_0012 = "0012_add_wbs_sort_order"
 REVISION_0013 = "0013_add_iquavis_task_baselines"
 REVISION_0014 = "0014_add_task_updated_by"
+REVISION_0015 = "0015_add_colony_org"
 
 MIGRATION_ORDER = (
     REVISION_0001,
@@ -43,6 +44,7 @@ MIGRATION_ORDER = (
     REVISION_0012,
     REVISION_0013,
     REVISION_0014,
+    REVISION_0015,
 )
 REVISION_RANK = {revision: index for index, revision in enumerate(MIGRATION_ORDER)}
 
@@ -124,6 +126,9 @@ def infer_revision_from_schema(db_path: Path) -> str | None:
         return None
 
     member_day_configs = snapshot.get("MemberDayConfigs")
+    if "ColonyTeams" in snapshot:
+        return REVISION_0015
+
     if "UpdatedByUserId" in tasks:
         return REVISION_0014
 

@@ -574,6 +574,51 @@ def _ensure_demo_progress_history(repository: TmsRepository, *, project_id: str)
 
 
 
+def _ensure_demo_colony(repository: TmsRepository, *, users: list, top_manager_id: str) -> None:
+    """デモ用の巣。役職4段・部屋の入れ子・掛け持ち・方針のチョークが一通り見えるようにする。"""
+    if repository.list_colony_teams():
+        return
+    others = [user for user in users if user.Id != top_manager_id]
+    repository.set_user_colony_role(top_manager_id, "president")
+    if not others:
+        return
+    manager = others[0]
+    chief = others[1] if len(others) > 1 else None
+    repository.set_user_colony_role(manager.Id, "manager")
+    if chief is not None:
+        repository.set_user_colony_role(chief.Id, "chief")
+    planning = repository.create_colony_team(
+        name="企画課", parent_team_id=None, leader_user_id=manager.Id, emblem="leaf"
+    )
+    operations = repository.create_colony_team(
+        name="運営課", parent_team_id=None, leader_user_id=None, emblem="acorn"
+    )
+    first_unit = repository.create_colony_team(
+        name="企画一係",
+        parent_team_id=planning.Id,
+        leader_user_id=chief.Id if chief is not None else None,
+        emblem="flower",
+    )
+    repository.add_colony_team_member(planning.Id, manager.Id)
+    if chief is not None:
+        repository.add_colony_team_member(planning.Id, chief.Id)
+        repository.add_colony_team_member(first_unit.Id, chief.Id)
+    for index, user in enumerate(others[2:]):
+        repository.add_colony_team_member(first_unit.Id if index % 2 == 0 else operations.Id, user.Id)
+    if len(others) > 2:
+        # 掛け持ちの例
+        repository.add_colony_team_member(operations.Id, others[2].Id)
+    repository.create_colony_policy(
+        kind="text",
+        text="お客様の時間を大切に",
+        x=-120,
+        y=-260,
+        size=2.2,
+        points=[],
+        author_user_id=top_manager_id,
+    )
+
+
 def bootstrap_data(settings: Settings, repository: TmsRepository) -> None:
     # メンバーの初期投入は iquavis_link_targets.xlsx を正とする。
     # ただし利用者が1人もいない空のDB（iQUAVIS を使わない新規導入）では、
@@ -640,3 +685,4 @@ def bootstrap_data(settings: Settings, repository: TmsRepository) -> None:
         )
 
         _ensure_demo_progress_history(repository=repository, project_id=project.Id)
+        _ensure_demo_colony(repository=repository, users=users, top_manager_id=top_manager.Id)

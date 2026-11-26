@@ -62,7 +62,7 @@ One person per task; work done by several people is expressed by splitting the t
 | View | Purpose |
 |---|---|
 | WBS / Gantt | Task tree, schedule, dependencies |
-| Colony (巣の外) | The whole tree as sweets that ants eat and carry home — started work is being eaten, finished work is carried away |
+| Colony (巣) | One screen with two sides. **Outside**: the work as sweets that ants eat and carry home. **Inside the nest**: the organization as rooms and tunnels. See below |
 | My task / Today | Personal list and a start / pause / done timer that records actual effort |
 | Split | Break a task into children in a spreadsheet-like grid (copy, paste, fill down / right) |
 | Progress | Work speed and progress-rate charts with Blue / Yellow / Red signals |
@@ -70,7 +70,62 @@ One person per task; work done by several people is expressed by splitting the t
 
 The UI is primarily Japanese; English messages are available (`ui.language: en`).
 
-## Quick start
+## The colony: outside and inside the nest
+
+The Colony tab is one game-like screen. Mouse wheel zooms, dragging moves the view, and the nest
+entrance takes you underground. There are no separate pages for viewing and editing.
+
+### Outside the nest — the work
+
+- **Areas** are framed plots on the ground: one per top-level task, a rough division of the business.
+- **Sweets** are the pieces of work inside an area. Their size says how far the work may be broken down:
+  crumb (one task, not split), sugar cube (1 level), wrapped candy (2 levels), chocolate bar (3 levels).
+- Started work is being **eaten** by ants; finished work is **carried home** and the sweet loses that piece.
+  Ants walk between the nest and their sweets, and paths used by more ants get worn wider.
+- Zooming in reveals details in leader-line callouts and each ant's team emblems above its head.
+- The president can write **policy in chalk** on the ground. It is only a reminder everyone sees —
+  like a company motto on the wall — and has no effect on anything else.
+- **Place work** by grabbing a sweet from the hand tray at the bottom and dropping it into an area.
+- **Assign work** by grabbing an ant and dropping it on a sweet.
+
+### Inside the nest — the organization
+
+The nest is a cross-section of tunnels and rooms. **A room is a team**; tunnels branch from the
+president's room down to departments and sections, so the org chart reads as a tree, however deep.
+
+- Click a room and its members walk through the tunnels into it. People can belong to several teams.
+- Drag an ant into a room to add it to that team; drag it out onto the soil to remove it.
+- Click an ant for its status card: role, teams, and how much food it brought home this month,
+  with a six-month chart. Click a room for the team total and the **per-person** figure, so a big team
+  that delivers little is visible too.
+- The **storage room** holds everything the company brought home; the **nursery** shows teaching time —
+  growing the next generation is core work of a colony.
+- Distant rooms close their doors and show only the head count.
+
+Figures use the same rules as the Ranking view (output = estimates of completed work) and the same
+publication rule: others' numbers are shown only for the upper half; you always see your own, and the
+president sees everyone's.
+
+### Roles
+
+| Role | Look | Biggest sweet | Can also |
+|---|---|---|---|
+| President (社長) | cigar | chocolate bar | write chalk policy, edit every room, set anyone's role |
+| Manager (課長) | necktie | wrapped candy | create areas; dig rooms and decide members below the room they lead; appoint chiefs |
+| Chief (係長) | yellow helmet | sugar cube | decide who does what (assign anyone) |
+| Member (一般) | white helmet | crumb | take unstarted work for themselves |
+
+A room's leader is a manager or a chief. Permissions are checked on the server.
+
+## Install on Windows (no Python or Node needed)
+
+Download `qolony_windows_*.zip` from [Releases](https://github.com/openceo2025/qolony/releases),
+extract it, and run `update_qolony_app.ps1` in it. The app goes to `C:\qolony`; the database and your
+settings stay in `C:\QOLONY_DATA`, so later updates never overwrite them. Details (Japanese) are in
+`00_README_WINDOWS.md` inside the zip. To build the zip yourself:
+`pwsh -File scripts/build_windows_bundle.ps1 -RuntimeEnv <conda env> -ZipPath qolony_windows.zip`.
+
+## Quick start (from source)
 
 Requirements: Python 3.12, Node.js 20+.
 
@@ -89,8 +144,8 @@ On the first start with an empty database, demo tasks are created for the fictio
 `backend/config/settings.yaml`. Edit `users.members` to match your team.
 The admin tab asks for the top manager's password (`change-me` by default) — change it.
 
-Useful environment variables: `QOLONY_DB_PATH` (SQLite file), `QOLONY_RELOAD=1` (auto reload),
-`QOLONY_SKIP_FRONTEND_BUILD=1`.
+Useful environment variables: `QOLONY_DB_PATH` (SQLite file), `QOLONY_SETTINGS_PATH` (settings file
+kept outside the app folder), `QOLONY_RELOAD=1` (auto reload), `QOLONY_SKIP_FRONTEND_BUILD=1`.
 
 ### Development
 

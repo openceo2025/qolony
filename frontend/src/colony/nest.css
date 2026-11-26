@@ -1,0 +1,547 @@
+/* 巣の外と巣の中を同じ画面で切り替える（2026-11-26） */
+.colony .field > .nest-canvas {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.38s ease;
+  cursor: default;
+}
+.colony.mode-inside .field > .nest-canvas {
+  opacity: 1;
+  pointer-events: auto;
+}
+.colony.mode-surfacing .field > .nest-canvas {
+  opacity: 0;
+}
+.colony.mode-inside .field-annotations {
+  display: none;
+}
+.colony .dive-curtain {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, #2a170c00 0, #2a170c 70%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.45s ease;
+  z-index: 2;
+}
+.colony.mode-diving .dive-curtain {
+  opacity: 1;
+}
+
+/* 手持ちと道具（ゲームの道具欄） */
+.colony .hotbar {
+  position: absolute;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  padding: 7px 10px 6px;
+  background: linear-gradient(#5a3a24f0, #3f2817f0);
+  border: 2px solid #c9935a;
+  border-radius: 16px;
+  box-shadow:
+    0 6px 0 #2b1a0e66,
+    0 10px 26px #2b1a0e55;
+  z-index: 3;
+  touch-action: none;
+}
+.colony .hotbar-label {
+  writing-mode: vertical-rl;
+  color: #f3d9a8;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  align-self: center;
+}
+.colony .hotbar-sep {
+  width: 2px;
+  align-self: stretch;
+  background: #c9935a55;
+  margin: 0 3px;
+}
+.colony .slot {
+  position: relative;
+  width: 62px;
+  height: 66px;
+  display: grid;
+  justify-items: center;
+  align-content: end;
+  gap: 1px;
+  padding: 3px 2px 4px;
+  background: radial-gradient(circle at 50% 35%, #fff4dc, #ecd2a2);
+  border: 2px solid #8a5b33;
+  border-radius: 11px;
+  color: #4a2f1d;
+  box-shadow: inset 0 -3px 0 #c79a62;
+  touch-action: none;
+  user-select: none;
+}
+.colony .slot:not(:disabled):hover {
+  transform: translateY(-3px);
+  box-shadow:
+    inset 0 -3px 0 #c79a62,
+    0 4px 0 #2b1a0e44;
+}
+.colony .slot.on {
+  border-color: #2f7d6f;
+  background: radial-gradient(circle at 50% 35%, #e8fff6, #b8e2d2);
+}
+.colony .slot small {
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.colony .slot.locked {
+  filter: grayscale(0.9);
+  opacity: 0.55;
+}
+.colony .slot i {
+  position: absolute;
+  top: 2px;
+  right: 3px;
+  font-style: normal;
+  font-size: 12px;
+}
+.colony .slot canvas {
+  pointer-events: none;
+}
+.colony .slot .chalk-stick {
+  width: 30px;
+  height: 9px;
+  border-radius: 3px;
+  background: linear-gradient(#ffffff, #e9e3d3);
+  transform: rotate(-28deg);
+  margin-bottom: 9px;
+  box-shadow: 0 2px 0 #b9ae95;
+}
+.colony .slot .hole {
+  width: 36px;
+  height: 14px;
+  border-radius: 50%;
+  background: radial-gradient(#140b06 30%, #4d2f1c 70%, #8a5b33);
+  margin-bottom: 9px;
+}
+.colony .slot .pick {
+  font-size: 24px;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.colony .slot .pile-icon {
+  width: 30px;
+  height: 18px;
+  margin-bottom: 6px;
+  background:
+    radial-gradient(circle at 30% 70%, #7a4127 0 4px, transparent 5px),
+    radial-gradient(circle at 55% 50%, #f6e6c2 0 4px, transparent 5px),
+    radial-gradient(circle at 75% 75%, #9a5a36 0 5px, transparent 6px);
+}
+.colony .map-hint {
+  bottom: 110px;
+}
+.colony .nest-hint {
+  color: #f6dfb6;
+  text-shadow: 0 1px #2a170c;
+}
+.colony .carry-ghost {
+  position: fixed;
+  z-index: 50;
+  pointer-events: none;
+  transform: translate(-50%, -70%) rotate(-6deg);
+  filter: drop-shadow(0 18px 6px #3b220f55);
+}
+
+/* 巣の中の見出し */
+.colony .nest-title {
+  color: #f6dfb6;
+}
+.colony .nest-badge {
+  background: #2f1c10e6;
+  border: 2px solid #c9935a;
+  color: #ffe9bf;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+.colony .nest-title small {
+  font-size: 11px;
+  background: #2f1c10cc;
+  color: #ffe9bf;
+  padding: 2px 9px;
+  border-radius: 999px;
+}
+
+/* ステータスカード */
+.colony .nest-card {
+  background: linear-gradient(#fffaf0f7, #f7ead2f7);
+  border: 2px solid #a8743f;
+  box-shadow:
+    0 6px 0 #6f452744,
+    0 14px 34px #2b1a0e55;
+  padding: 12px 14px 14px;
+  display: grid;
+  gap: 10px;
+}
+.colony .nest-card-head {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+}
+.colony .nest-card-head h2 {
+  margin: 0;
+  font-size: 17px;
+}
+.colony .nest-card-head small {
+  font-size: 11px;
+  color: #7a5c43;
+}
+.colony .role-chip {
+  display: inline-block;
+  margin-top: 3px;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: #efe3cc;
+}
+.colony .role-chip.role-president {
+  background: #6b3f6e;
+  color: #fff3dd;
+}
+.colony .role-chip.role-manager {
+  background: #c8423a;
+  color: #fff3dd;
+}
+.colony .role-chip.role-chief {
+  background: #f2c12e;
+}
+.colony .role-chip.role-member {
+  background: #f6f3ea;
+  border: 1px solid #cfc8b6;
+}
+.colony .nest-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.colony .nest-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  padding: 2px 8px 2px 3px;
+  background: #fff;
+  border: 1px solid #d9c3a0;
+  border-radius: 999px;
+}
+.colony .nest-chip em {
+  font-style: normal;
+  font-weight: 800;
+  color: #2f7d6f;
+}
+.colony .nest-chip.muted,
+.colony .muted {
+  color: #8b7560;
+  padding-left: 8px;
+}
+.colony .nest-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.colony .nest-stat {
+  background: #3f2817;
+  color: #ffe9bf;
+  border-radius: 10px;
+  padding: 6px 8px;
+  display: grid;
+}
+.colony .nest-stat small {
+  font-size: 10px;
+  opacity: 0.85;
+}
+.colony .nest-stat b {
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+}
+.colony .nest-stat em {
+  font-style: normal;
+  font-size: 11px;
+  margin-left: 2px;
+}
+.colony .month-bars {
+  width: 100%;
+  height: auto;
+  background: #fff7e6;
+  border-radius: 10px;
+  border: 1px solid #e3cda5;
+}
+.colony .month-bars .bar {
+  fill: #c9935a;
+}
+.colony .month-bars .bar.now {
+  fill: #2f7d6f;
+}
+.colony .month-bars text {
+  font-size: 10px;
+  fill: #6b4e36;
+}
+.colony .month-bars .value {
+  font-weight: 800;
+  fill: #2f5f55;
+}
+.colony .month-bars .per-person {
+  fill: none;
+  stroke: #c8423a;
+  stroke-width: 2;
+}
+.colony .nest-legend {
+  margin: -4px 0 0;
+  font-size: 10px;
+  color: #6b4e36;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.colony .swatch {
+  display: inline-block;
+  width: 12px;
+  height: 8px;
+  border-radius: 2px;
+}
+.colony .swatch.bar {
+  background: #c9935a;
+}
+.colony .swatch.line {
+  height: 2px;
+  background: #c8423a;
+  margin-left: 8px;
+}
+.colony .nest-note {
+  margin: 0;
+  font-size: 11px;
+  color: #7a5c43;
+}
+.colony .nest-section {
+  display: grid;
+  gap: 4px;
+}
+.colony .nest-section > small {
+  font-size: 11px;
+  font-weight: 700;
+  color: #7a5c43;
+}
+.colony .role-picker {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
+}
+.colony .role-picker button {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  padding: 3px 2px 4px;
+  background: #fff7e6;
+  border: 2px solid #d9c3a0;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.colony .role-picker button.current {
+  border-color: #2f7d6f;
+  background: #e8fff6;
+  opacity: 1;
+}
+.colony .role-picker i {
+  position: absolute;
+  top: 1px;
+  right: 3px;
+  font-style: normal;
+  font-size: 10px;
+}
+.colony .emblem-btn,
+.colony .name-btn {
+  background: none;
+  border: 0;
+  padding: 0;
+}
+.colony .name-btn {
+  font: inherit;
+  font-weight: 800;
+  text-align: left;
+}
+.colony .inline-name input {
+  width: 100%;
+  font-size: 15px;
+  padding: 3px 6px;
+}
+.colony .nest-members {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 3px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+.colony .nest-members button {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 6px;
+  background: #fff;
+  border: 1px solid #ead8b8;
+  border-radius: 8px;
+  padding: 2px 8px 2px 2px;
+  text-align: left;
+  font-size: 12px;
+}
+.colony .nest-members small {
+  margin-left: 6px;
+  font-size: 10px;
+  color: #8b7560;
+}
+.colony .nest-members em {
+  font-style: normal;
+  font-weight: 800;
+  color: #2f7d6f;
+}
+.colony .nest-members b {
+  font-variant-numeric: tabular-nums;
+}
+.colony .tool-btn.danger {
+  color: #9a2d24;
+  border-color: #d39a8f;
+}
+
+/* 地面に浮かぶ小さな入力（チョーク・お菓子を置く）と、真ん中の小窓 */
+.colony .floating-form,
+.colony .center-card {
+  position: absolute;
+  z-index: 6;
+  background: linear-gradient(#fffaf0, #f6e8cc);
+  border: 2px solid #a8743f;
+  border-radius: 14px;
+  box-shadow:
+    0 6px 0 #6f452744,
+    0 14px 30px #2b1a0e55;
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+  width: 270px;
+}
+.colony .floating-form {
+  transform: translate(-50%, 14px);
+}
+.colony .center-card {
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(380px, calc(100% - 32px));
+  max-height: calc(100% - 140px);
+  overflow-y: auto;
+}
+.colony .floating-form p,
+.colony .center-card h3 {
+  margin: 0;
+  font-size: 13px;
+}
+.colony .floating-form label,
+.colony .center-card label {
+  display: grid;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.colony .floating-form input,
+.colony .center-card input {
+  padding: 6px 8px;
+  border: 1px solid #c9a777;
+  border-radius: 7px;
+  background: #fff;
+}
+.colony .floating-form .form-row {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 6px;
+}
+.colony .drop-form .dropped {
+  position: absolute;
+  top: -58px;
+  left: 50%;
+  transform: translateX(-50%);
+  animation: colony-drop 0.42s cubic-bezier(0.3, 0, 0.6, 1.4);
+  filter: drop-shadow(0 6px 3px #3b220f44);
+}
+@keyframes colony-drop {
+  from {
+    transform: translate(-50%, -80px) scale(1.15);
+    opacity: 0.6;
+  }
+  to {
+    transform: translate(-50%, 0) scale(1);
+    opacity: 1;
+  }
+}
+.colony .center-card ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+.colony .center-card li button {
+  width: 100%;
+  text-align: left;
+  display: grid;
+  background: #fff;
+  border: 1px solid #ead8b8;
+  border-radius: 8px;
+  padding: 6px 9px;
+}
+.colony .center-card li small {
+  color: #8b7560;
+  font-size: 11px;
+}
+.colony .colony-toast {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 8;
+  background: #2f1c10ee;
+  color: #ffe9bf;
+  border: 2px solid #c9935a;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  max-width: calc(100% - 32px);
+}
+.colony .colony-toast.error {
+  background: #6f2a22ee;
+  border-color: #e08a7a;
+}
+@media (max-width: 700px) {
+  .colony .hotbar {
+    bottom: 8px;
+    gap: 3px;
+    padding: 5px 6px;
+    max-width: calc(100% - 16px);
+    overflow-x: auto;
+  }
+  .colony .slot {
+    width: 50px;
+    height: 58px;
+  }
+  .colony .hotbar-label {
+    display: none;
+  }
+  .colony .map-nav {
+    bottom: 84px;
+  }
+}

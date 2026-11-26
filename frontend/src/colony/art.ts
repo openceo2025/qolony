@@ -138,6 +138,7 @@ export const artSize: Record<Kind, number> = {
   cookie: 51,
   chocolate: 88,
   lollipop: 79,
+  crumb: 16,
 };
 function sugar(c: Ctx) {
   paint(c, "M-22 -28 L3 -39 L25 -29 L0 -16 Z", "#fff6d9");
@@ -266,8 +267,18 @@ export function candy(c: Ctx, kind: Kind, piece: number, shadow = true) {
       break;
     case "cookie":
       cookie(c);
+      break;
+    case "crumb":
+      crumb(c);
   }
   c.restore();
+}
+
+/** かけら: 分解しない1つの仕事。チョコの小さな欠片。 */
+export function crumb(c: Ctx) {
+  paint(c, "M-9 -4 L-3 -11 L7 -9 L10 -1 L5 4 L-6 4 Z", "#6e3420");
+  paint(c, "M-8 -5 L-3 -10 L6 -8 L3 -4 L-5 -3 Z", "#b0643f");
+  paint(c, "M3 -4 L6 -8 L9 -1 L5 3 Z", "#8a4a2e");
 }
 export function ant(
   c: Ctx,
@@ -309,7 +320,31 @@ export function ant(
   oval(c, 7, -23, 8.9, 9.1, ink, 0.15);
   stroke(c, "M5 -30 Q0 -39 -4 -35 M10 -30 Q11 -37 15 -35", ink, 1.8);
   oval(c, 11, -24, 1.45, 2.05, "#fff5d6");
-  if (accessory === "scarf") {
+  if (accessory === "tie") {
+    // 課長: ネクタイ。結び目を首に、剣先を胸へ垂らす。
+    paint(c, "M2.2 -20.6 L5.6 -20.2 L5 -17.6 L2.6 -17.8 Z", "#8f2a2a");
+    paint(c, "M2.7 -17.9 L4.9 -17.7 L5.6 -10.8 L3.9 -8.6 L2.1 -10.9 Z", "#c8423a");
+    stroke(c, "M3 -15.5 L5.1 -14.6 M2.6 -12.6 L5.3 -11.6", "#e9877b", 0.7);
+  } else if (accessory === "helmet-yellow" || accessory === "helmet-white") {
+    // 係長 = 黄色、一般 = 白のヘルメット。
+    const yellow = accessory === "helmet-yellow";
+    paint(c, "M-2.2 -25 Q-1.4 -36.5 7.2 -36.4 Q15.6 -36.2 16.2 -25.4 Z", yellow ? "#f2c12e" : "#f6f3ea");
+    paint(c, "M-3.6 -25.6 L19 -25.6 Q19.4 -23.6 17 -23.4 L-3 -23.6 Z", yellow ? "#d9a514" : "#cfc8b6");
+    stroke(c, "M7.2 -36.2 L7.4 -25.8", yellow ? "#c79410" : "#b9b09b", 1.1);
+    stroke(c, "M0.6 -28.6 Q1.4 -33.6 4.6 -35", yellow ? "#fbe38c" : "#ffffff", 1.2);
+  } else if (accessory === "cigar") {
+    // 社長: 葉巻をくわえる。先が赤く光り、煙がゆっくり上る。
+    stroke(c, "M13.5 -19.4 L23.5 -17.6", "#7a4a25", 3);
+    stroke(c, "M15.6 -19 L17.4 -18.7", "#d8b04e", 3.1);
+    oval(c, 24, -17.5, 1.5, 1.5, "#ff7438");
+    const rise = (phase * 0.35) % 1;
+    c.save();
+    c.globalAlpha = 0.45 * (1 - rise);
+    oval(c, 25 + rise * 2.5, -21 - rise * 9, 1.6 + rise * 1.8, 1.4 + rise * 1.5, "#d9d3c7");
+    c.globalAlpha = 0.3 * rise;
+    oval(c, 26.5 - rise * 2, -27 - rise * 6, 1.3 + rise, 1.1 + rise, "#d9d3c7");
+    c.restore();
+  } else if (accessory === "scarf") {
     paint(c, "M-1 -19 Q4 -16 9 -18 L7 -15 L1 -16 L-6 -14 L-4 -17 L-10 -20 Z", "#48ad9c");
   } else if (accessory === "cap") {
     paint(c, "M-1 -27 Q0 -37 7 -35 Q12 -35 15 -29 L19 -28 Q19 -26 14 -26 Z", "#fbb933");
@@ -321,6 +356,94 @@ export function ant(
     stroke(c, "M2 -17 Q8 -13 17 -16 M4 -16 L16 -13", ink, 2.6);
   } else {
     stroke(c, `M2 -17 Q5 -13 ${8 - stride * 0.45} -13`, ink, 2.5);
+  }
+  c.restore();
+}
+
+/** 部屋（チーム）の紋章の色。巣の中の部屋と、巣の外でアリの頭上に出る札で同じ色を使う。 */
+export const emblemColor: Record<string, string> = {
+  leaf: "#3f8f5a",
+  acorn: "#9a6a2f",
+  flower: "#c0567a",
+  mushroom: "#b2463a",
+  drop: "#3f7fb5",
+  star: "#c99a1c",
+  shell: "#8d6fae",
+  clover: "#2f8a7a",
+  crown: "#6b3f6e",
+  storage: "#8a5a2b",
+  nursery: "#c27b4b",
+};
+
+/** 紋章を丸い札に描く。r は札の半径。 */
+export function emblem(c: Ctx, x: number, y: number, r: number, name: string, ring = "#fff7e4") {
+  const color = emblemColor[name] ?? "#7b6a55";
+  c.save();
+  c.translate(x, y);
+  c.beginPath();
+  c.arc(0, 0, r, 0, Math.PI * 2);
+  c.fillStyle = ring;
+  c.fill();
+  c.beginPath();
+  c.arc(0, 0, r * 0.82, 0, Math.PI * 2);
+  c.fillStyle = color;
+  c.fill();
+  c.scale(r / 10, r / 10);
+  const ink = "#fff9ec";
+  switch (name) {
+    case "leaf":
+      paint(c, "M-5 5 Q-6 -5 5 -6 Q6 5 -5 5 Z", ink);
+      stroke(c, "M-4 4 L3 -3", color, 1);
+      break;
+    case "acorn":
+      paint(c, "M-4.5 -1 Q-4 6.5 0 7 Q4 6.5 4.5 -1 Z", ink);
+      paint(c, "M-5.5 -1 Q0 -7 5.5 -1 Z", "#f4dfb8");
+      stroke(c, "M0 -4 L1 -6.5", ink, 1.2);
+      break;
+    case "flower":
+      for (let i = 0; i < 5; i++) {
+        const a = (i / 5) * Math.PI * 2;
+        oval(c, Math.cos(a) * 3.6, Math.sin(a) * 3.6, 2.7, 2.7, ink);
+      }
+      oval(c, 0, 0, 2, 2, "#f6c445");
+      break;
+    case "mushroom":
+      paint(c, "M-6 0 Q0 -9 6 0 Z", ink);
+      paint(c, "M-1.8 0 L1.8 0 L1.4 5.5 L-1.4 5.5 Z", "#f4dfb8");
+      break;
+    case "drop":
+      paint(c, "M0 -6.5 Q5.5 1 3.6 4.2 Q0 7.5 -3.6 4.2 Q-5.5 1 0 -6.5 Z", ink);
+      break;
+    case "star":
+      paint(c, "M0 -6.5 L1.9 -2 L6.6 -1.8 L3 1.2 L4.2 6 L0 3.4 L-4.2 6 L-3 1.2 L-6.6 -1.8 L-1.9 -2 Z", ink);
+      break;
+    case "shell":
+      paint(c, "M-6 3 Q-5 -6 0 -6 Q5 -6 6 3 Z", ink);
+      stroke(c, "M0 3 L0 -5 M0 3 L-3.4 -4 M0 3 L3.4 -4", color, 0.9);
+      break;
+    case "clover":
+      for (const [dx, dy] of [
+        [0, -3],
+        [-3, 1],
+        [3, 1],
+      ])
+        oval(c, dx, dy, 2.9, 2.9, ink);
+      stroke(c, "M0 1 L1.5 6", ink, 1.2);
+      break;
+    case "crown":
+      paint(c, "M-6 4 L-6 -3 L-3 0 L0 -5 L3 0 L6 -3 L6 4 Z", "#f3c84a");
+      break;
+    case "storage":
+      oval(c, 0, 3, 6, 2.6, "#f4dfb8");
+      paint(c, "M-4 2 L-1 -4 L2 2 Z", ink);
+      paint(c, "M0 2 L3 -2 L6 2 Z", "#f4dfb8");
+      break;
+    case "nursery":
+      oval(c, -2.4, 1, 3.4, 4.4, ink);
+      oval(c, 3, 2, 2.4, 3.2, "#f4dfb8");
+      break;
+    default:
+      oval(c, 0, 0, 3, 3, ink);
   }
   c.restore();
 }

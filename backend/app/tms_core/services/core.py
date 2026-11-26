@@ -205,6 +205,7 @@ class TaskView:
     IQuavisConflictMessage: str | None
     PlannedDeliverables: list[dict[str, str]]
     OutputDeliverables: list[dict[str, str]]
+    ColonySize: int | None = None
 
 
 @dataclass(frozen=True)
@@ -930,6 +931,7 @@ class TmsService:
                 ),
                 PlannedDeliverables=self._parse_deliverables(t.PlannedDeliverablesJson),
                 OutputDeliverables=self._parse_deliverables(t.OutputDeliverablesJson),
+                ColonySize=getattr(t, "ColonySize", None),
             )
             for t in tasks
         ]
@@ -1254,6 +1256,34 @@ class TmsService:
         is_rework: bool,
         memo: str = "",
     ) -> list[str]:
+        _, warnings = self.create_task_returning_id(
+            name=name,
+            assignee_user_id=assignee_user_id,
+            creator_user_id=creator_user_id,
+            assigned_manhour=assigned_manhour,
+            end_date=end_date,
+            parent_task_id=parent_task_id,
+            planned_deliverables=planned_deliverables,
+            is_rework=is_rework,
+            memo=memo,
+        )
+        return warnings
+
+    def create_task_returning_id(
+        self,
+        *,
+        name: str,
+        assignee_user_id: str,
+        creator_user_id: str,
+        assigned_manhour: int,
+        end_date: date,
+        parent_task_id: str | None,
+        planned_deliverables: list[dict[str, str]],
+        is_rework: bool,
+        memo: str = "",
+        allow_root_by_caller: bool = False,
+    ) -> tuple[str, list[str]]:
+        """allow_root_by_caller は、呼び出し側（巣の役職判定）が一番上のタスク作成を許した場合だけ True にする。"""
         if not name.strip():
             raise UserInputError("繧ｿ繧ｹ繧ｯ蜷阪ｒ蜈･蜉帙＠縺ｦ縺上□縺輔＞")
         if assigned_manhour <= 0:
@@ -1274,7 +1304,7 @@ class TmsService:
                 raise UserInputError("完了・中止タスクの配下には子タスクを追加できません")
             task_type = "Task"
         else:
-            if not creator.IsTopManager:
+            if not creator.IsTopManager and not allow_root_by_caller:
                 raise UserInputError("ルートタスクはTop Managerのみ作成できます")
 
         start_date = min(date.today(), end_date)
@@ -1310,7 +1340,7 @@ class TmsService:
                 )
                 warnings.append("親タスクの期間外だったため、親タスクと祖先タスクの期間を自動調整しました。")
         self.recompute_all_task_progress()
-        return warnings
+        return created.Id, warnings
 
     def set_crash_zone_pct(self, value: float) -> None:
         if value < 0 or value > 100:

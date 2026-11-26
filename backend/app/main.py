@@ -20,6 +20,7 @@ from app.api.user_facing_text import normalize_user_facing_text
 from app.api.serializers import to_jsonable
 from app.runtime import Runtime, build_runtime
 from app.iquavis.sync import IquavisConflictPermissionError, IquavisConflictStaleError
+from app.tms_core.domain.colony import ColonyPermissionError
 from app.tms_core.services.core import UserInputError, task_revision
 
 logger = logging.getLogger(__name__)
@@ -245,6 +246,76 @@ class WbsSiblingReorderBody(BaseModel):
     parent_task_id: str | None = None
     ordered_task_ids: list[str]
     expected_order_revision: str | None = None
+
+
+class ColonyRoleBody(BaseModel):
+    user_id: str
+    target_user_id: str
+    role: str
+
+
+class ColonyRoomCreateBody(BaseModel):
+    user_id: str
+    parent_team_id: str | None = None
+    name: str
+    emblem: str | None = None
+
+
+class ColonyRoomUpdateBody(BaseModel):
+    user_id: str
+    name: str | None = None
+    emblem: str | None = None
+    leader_user_id: str | None = None
+    clear_leader: bool = False
+    parent_team_id: str | None = None
+    move_to_root: bool = False
+
+
+class ColonyActorBody(BaseModel):
+    user_id: str
+
+
+class ColonyMemberBody(BaseModel):
+    user_id: str
+    member_user_id: str
+
+
+class ColonyPolicyBody(BaseModel):
+    user_id: str
+    kind: str = "text"
+    text: str = ""
+    x: float = 0
+    y: float = 0
+    size: float = 1
+    points: list[list[float]] = Field(default_factory=list)
+
+
+class ColonyPolicyUpdateBody(BaseModel):
+    user_id: str
+    text: str | None = None
+    x: float | None = None
+    y: float | None = None
+
+
+class ColonySweetBody(BaseModel):
+    user_id: str
+    area_task_id: str
+    name: str
+    size: int
+    assigned_manhour: int
+    end_date: str
+
+
+class ColonyAreaBody(BaseModel):
+    user_id: str
+    name: str
+    end_date: str
+
+
+class ColonyAssignBody(BaseModel):
+    user_id: str
+    assignee_user_id: str
+    expected_revision: str | None = None
 
 
 class TaskCreateBody(BaseModel):
@@ -496,6 +567,13 @@ async def _handle_user_error(request: Request, exc: UserInputError):  # type: ig
     detail = normalize_user_facing_text(str(exc))
     logger.warning("user input error: %s %s -> %s", request.method, request.url.path, detail)
     return JSONResponse(status_code=400, content={"detail": detail})
+
+
+@app.exception_handler(ColonyPermissionError)
+async def _handle_colony_permission(request: Request, exc: ColonyPermissionError):  # type: ignore[override]
+    detail = str(exc)
+    logger.info("colony permission: %s %s -> %s", request.method, request.url.path, detail)
+    return JSONResponse(status_code=403, content={"detail": detail, "code": "colony_permission"})
 
 
 @app.exception_handler(TaskConflictError)
@@ -1249,6 +1327,130 @@ def get_ranking_history(
             period_months=period_months,
         )
     )
+
+
+# ---- 巣（組織・役職・方針・貢献）----
+
+
+def _colony_date(value: str) -> date:
+    try:
+        return date.fromisoformat(value)
+    except ValueError as exc:
+        raise UserInputError("期日はYYYY-MM-DD形式で指定してください") from exc
+
+
+@app.get("/api/colony/org")
+def get_colony_org(user_id: str = Query(...)) -> dict[str, Any]:
+    return to_jsonable(get_runtime().colony.get_org(user_id))
+
+
+@app.get("/api/colony/contributions")
+def get_colony_contributions(user_id: str = Query(...), year_month: str = Query(...)) -> dict[str, Any]:
+    return to_jsonable(get_runtime().colony.contributions(user_id, year_month))
+
+
+@app.post("/api/colony/roles")
+def set_colony_role(body: ColonyRoleBody) -> dict[str, Any]:
+    get_runtime().colony.set_role(body.user_id, body.target_user_id, body.role)
+    return {"status": "ok"}
+
+
+@app.post("/api/colony/rooms")
+def dig_colony_room(body: ColonyRoomCreateBody) -> dict[str, Any]:
+    team_id = get_runtime().colony.dig_room(
+        body.user_id, parent_team_id=body.parent_team_id, name=body.name, emblem=body.emblem
+    )
+    return {"status": "ok", "team_id": team_id}
+
+
+@app.post("/api/colony/rooms/{team_id}")
+def update_colony_room(team_id: str, body: ColonyRoomUpdateBody) -> dict[str, Any]:
+    get_runtime().colony.update_room(
+        body.user_id,
+        team_id,
+        name=body.name,
+        emblem=body.emblem,
+        leader_user_id=body.leader_user_id,
+        clear_leader=body.clear_leader,
+        parent_team_id=body.parent_team_id,
+        move_to_root=body.move_to_root,
+    )
+    return {"status": "ok"}
+
+
+@app.post("/api/colony/rooms/{team_id}/fill")
+def fill_colony_room(team_id: str, body: ColonyActorBody) -> dict[str, Any]:
+    get_runtime().colony.fill_room(body.user_id, team_id)
+    return {"status": "ok"}
+
+
+@app.post("/api/colony/rooms/{team_id}/join")
+def join_colony_room(team_id: str, body: ColonyMemberBody) -> dict[str, Any]:
+    get_runtime().colony.join(body.user_id, team_id, body.member_user_id)
+    return {"status": "ok"}
+
+
+@app.post("/api/colony/rooms/{team_id}/leave")
+def leave_colony_room(team_id: str, body: ColonyMemberBody) -> dict[str, Any]:
+    get_runtime().colony.leave(body.user_id, team_id, body.member_user_id)
+    return {"status": "ok"}
+
+
+@app.post("/api/colony/policies")
+def write_colony_policy(body: ColonyPolicyBody) -> dict[str, Any]:
+    policy_id = get_runtime().colony.write_policy(
+        body.user_id,
+        kind=body.kind,
+        text=body.text,
+        x=body.x,
+        y=body.y,
+        size=body.size,
+        points=body.points,
+    )
+    return {"status": "ok", "policy_id": policy_id}
+
+
+@app.post("/api/colony/policies/{policy_id}")
+def update_colony_policy(policy_id: str, body: ColonyPolicyUpdateBody) -> dict[str, Any]:
+    get_runtime().colony.move_policy(body.user_id, policy_id, text=body.text, x=body.x, y=body.y)
+    return {"status": "ok"}
+
+
+@app.post("/api/colony/policies/{policy_id}/erase")
+def erase_colony_policy(policy_id: str, body: ColonyActorBody) -> dict[str, Any]:
+    get_runtime().colony.erase_policy(body.user_id, policy_id)
+    return {"status": "ok"}
+
+
+@app.post("/api/colony/sweets")
+def drop_colony_sweet(body: ColonySweetBody) -> dict[str, Any]:
+    rt = get_runtime()
+    with _guard_task_mutation():
+        task_id, warnings = rt.colony.drop_sweet(
+            body.user_id,
+            area_task_id=body.area_task_id,
+            name=body.name,
+            size=body.size,
+            assigned_minutes=body.assigned_manhour,
+            end_date=_colony_date(body.end_date),
+        )
+    return {"status": "ok", "task_id": task_id, "warnings": warnings}
+
+
+@app.post("/api/colony/areas")
+def create_colony_area(body: ColonyAreaBody) -> dict[str, Any]:
+    rt = get_runtime()
+    with _guard_task_mutation():
+        task_id, warnings = rt.colony.create_area(body.user_id, name=body.name, end_date=_colony_date(body.end_date))
+    return {"status": "ok", "task_id": task_id, "warnings": warnings}
+
+
+@app.post("/api/colony/tasks/{task_id}/assign")
+def assign_colony_task(task_id: str, body: ColonyAssignBody) -> dict[str, Any]:
+    rt = get_runtime()
+    with _guard_task_revision(rt, task_id, body.expected_revision, operator_user_id=body.user_id):
+        rt.colony.assign(body.user_id, task_id, body.assignee_user_id)
+        return _task_mutation_payload(rt, task_id)
 
 
 @app.get("/api/admin/infeasibility")

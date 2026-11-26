@@ -318,8 +318,10 @@ def _load_ui_messages(base_dir: Path, language: str) -> tuple[dict[str, Any], di
     return messages, fallback_messages
 
 
-def load_settings(path: Path | str = "config/settings.yaml") -> Settings:
+def load_settings(path: Path | str = "config/settings.yaml", config_dir: Path | str | None = None) -> Settings:
     config_path = Path(path)
+    # 分割テンプレート・カレンダー・言語ファイルはアプリ側のもの。設定ファイルだけ外に置けるようにする。
+    support_dir = Path(config_dir) if config_dir is not None else config_path.parent
     raw = yaml.safe_load(config_path.read_text(encoding="utf-8"))
 
     app = raw["app"]
@@ -362,10 +364,10 @@ def load_settings(path: Path | str = "config/settings.yaml") -> Settings:
         names = ", ".join(sorted(unknown_password_users))
         raise ValueError(f"users.passwords contains unknown users not in members: {names}")
 
-    split_templates_path = config_path.parent / "split_templates.yaml"
-    calendar_path = config_path.parent / "calendar.yaml"
+    split_templates_path = support_dir / "split_templates.yaml"
+    calendar_path = support_dir / "calendar.yaml"
     ui_language = str(ui_raw.get("language", "en")).strip().lower() or "en"
-    ui_messages, fallback_messages = _load_ui_messages(config_path.parent, ui_language)
+    ui_messages, fallback_messages = _load_ui_messages(support_dir, ui_language)
 
     db_path = Path(os.getenv("QOLONY_DB_PATH", "").strip() or app["db_path"])
     editor_workbook_path = _parse_optional_path(
