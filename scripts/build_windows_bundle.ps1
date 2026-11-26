@@ -3,7 +3,8 @@ param(
   [string]$OutputDir = "",
   [string]$ZipPath = "",
   [switch]$SkipFrontendBuild,
-  [switch]$SkipRuntimePack
+  [switch]$SkipRuntimePack,
+  [string]$CondaPackPath = ""
 )
 
 # Builds a Windows bundle that runs without Python or Node installed:
@@ -61,24 +62,81 @@ Copy-Item -LiteralPath (Join-Path $root "frontend\dist") -Destination (Join-Path
 
 if (-not $SkipRuntimePack) {
   if ([string]::IsNullOrWhiteSpace($RuntimeEnv)) { throw "Pass -RuntimeEnv <conda env name> or run from an activated conda env." }
-  $condaPack = Get-Command conda-pack -ErrorAction SilentlyContinue
-  $packPath = if ($null -ne $condaPack) { $condaPack.Source } else { $null }
+  $packPath = $null
+  if (-not [string]::IsNullOrWhiteSpace($CondaPackPath) -and (Test-Path -LiteralPath $CondaPackPath)) { $packPath = $CondaPackPath }
   if ($null -eq $packPath) {
+    $condaPack = Get-Command conda-pack -ErrorAction SilentlyContinue
+    if ($null -ne $condaPack) { $packPath = $condaPack.Source }
+  }
+  if ($null -eq $packPath) {
+    $bases = @()
     $conda = Get-Command conda -ErrorAction SilentlyContinue
-    if ($null -ne $conda) {
-      $base = (& conda info --base 2>$null | Select-Object -First 1)
+    if ($null -ne $conda) { $bases += (& conda info --base 2>$null | Select-Object -First 1) }
+    foreach ($name in @("anaconda3", "miniconda3", "miniforge3")) {
+      $bases += Join-Path $env:USERPROFILE $name
+      $bases += Join-Path $env:ProgramData $name
+    }
+    foreach ($base in $bases) {
+      if ([string]::IsNullOrWhiteSpace($base)) { continue }
       $candidate = Join-Path $base "envs\$RuntimeEnv\Scripts\conda-pack.exe"
-      if (Test-Path -LiteralPath $candidate) { $packPath = $candidate }
+      if (Test-Path -LiteralPath $candidate) { $packPath = $candidate; break }
     }
   }
   if ($null -eq $packPath) { throw "conda-pack was not found. Install it into the env: conda install -n $RuntimeEnv -c conda-forge conda-pack" }
   $runtimeZip = Join-Path $out "runtime.zip"
   Write-Host "runtime: conda-pack $RuntimeEnv"
-  & $packPath -n $RuntimeEnv -o $runtimeZip --format zip --ignore-editable-packages
+  # conda-pack -n needs conda on PATH. When conda-pack lives inside the env, pass the env folder instead.
+  $envPrefix = Split-Path -Parent (Split-Path -Parent $packPath)
+  if ((Split-Path -Leaf $envPrefix) -ieq $RuntimeEnv -and (Test-Path -LiteralPath (Join-Path $envPrefix "python.exe"))) {
+    & $packPath -p $envPrefix -o $runtimeZip --format zip --ignore-editable-packages
+  } else {
+    & $packPath -n $RuntimeEnv -o $runtimeZip --format zip --ignore-editable-packages
+  }
   if ($LASTEXITCODE -ne 0) { throw "conda-pack failed" }
   Expand-Archive -LiteralPath $runtimeZip -DestinationPath (Join-Path $out "runtime") -Force
   Remove-Item -LiteralPath $runtimeZip -Force
   if (-not (Test-Path -LiteralPath (Join-Path $out "runtime\python.exe"))) { throw "runtime\python.exe is missing after packing." }
+
+  # Strip files that record the build machine's absolute paths (user name, local folders).
+  # QOLONY starts with "python -m uvicorn", so entry-point launchers and caches are not needed.
+  $runtimeDir = Join-Path $out "runtime"
+  Get-ChildItem -LiteralPath $runtimeDir -Recurse -Directory -Filter "__pycache__" | Remove-Item -Recurse -Force
+  $condaMeta = Join-Path $runtimeDir "conda-meta"
+  if (Test-Path -LiteralPath $condaMeta) { Remove-Item -LiteralPath $condaMeta -Recurse -Force }
+  $scriptsDir = Join-Path $runtimeDir "Scripts"
+  if (Test-Path -LiteralPath $scriptsDir) {
+    Get-ChildItem -LiteralPath $scriptsDir -File |
+      Where-Object { $_.Extension -ieq ".exe" -or $_.Name -like "conda-unpack*" -or $_.Name -like "conda_unpack*" } |
+      Remove-Item -Force
+  }
+  # Editable (development) installs point at folders on the build machine.
+  $sitePackages = Join-Path $runtimeDir "Lib\site-packages"
+  foreach ($pth in @(Get-ChildItem -LiteralPath $sitePackages -File -Filter "*.pth")) {
+    $text = Get-Content -LiteralPath $pth.FullName -Raw
+    if ($text -match '[A-Za-z]:[\\/]') { Remove-Item -LiteralPath $pth.FullName -Force }
+  }
+  foreach ($info in @(Get-ChildItem -LiteralPath $sitePackages -Directory -Filter "*.dist-info")) {
+    $direct = Join-Path $info.FullName "direct_url.json"
+    if ((Test-Path -LiteralPath $direct) -and ((Get-Content -LiteralPath $direct -Raw) -match '"editable"\s*:\s*true')) {
+      Remove-Item -LiteralPath $info.FullName -Recurse -Force
+    }
+  }
+}
+
+# Refuse to ship anything that still contains this machine's user folder.
+$needles = @(('\Users\' + $env:USERNAME), ('/Users/' + $env:USERNAME))
+$latin1 = [System.Text.Encoding]::GetEncoding(28591)
+$leaks = @()
+foreach ($file in Get-ChildItem -LiteralPath $out -Recurse -File) {
+  if ($file.Length -gt 64MB) { continue }
+  $content = $latin1.GetString([System.IO.File]::ReadAllBytes($file.FullName))
+  foreach ($needle in $needles) {
+    if ($content.IndexOf($needle, [System.StringComparison]::OrdinalIgnoreCase) -ge 0) { $leaks += $file.FullName; break }
+  }
+}
+if ($leaks.Count -gt 0) {
+  $leaks | Select-Object -First 20 | ForEach-Object { Write-Warning "contains a local user path: $_" }
+  throw "The bundle still contains this machine's user folder ($($leaks.Count) files)."
 }
 
 $startBat = @'

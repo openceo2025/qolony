@@ -17,7 +17,8 @@ if ($actual -ne $expected) { throw "ZIP が壊れています。もう一度ダ�
 Expand-Archive -LiteralPath $zip -DestinationPath 'D:\QOLONY_UPDATE\bundle'
 ```
 
-展開先は、今の `C:\qolony` とは別のフォルダーにします。
+展開先は、今の `C:\qolony` とは別の、**浅いフォルダー**（例: `D:\QOLONY_UPDATE\bundle`）にします。
+ダウンロードフォルダーの奥など深い場所に展開すると、Windows のパスの長さの上限（260文字）を超えて失敗することがあります。
 
 ## 2. 入れる・更新する
 
