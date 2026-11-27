@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import codecs
 import json
 import logging
 import os
@@ -45,32 +46,20 @@ def run_excel_server_save(
     child_env = os.environ.copy()
     child_env["QOLONY_EXCEL_AUTOMATION_USERNAME"] = username
     child_env["QOLONY_EXCEL_AUTOMATION_PASSWORD"] = password
-    command = [
-        powershell_executable,
-        "-NoLogo",
-        "-NoProfile",
-        "-NonInteractive",
-        "-ExecutionPolicy",
-        "Bypass",
-        "-File",
-        str(script_path),
-        "-WorkbookPath",
-        str(resolved_workbook_path),
-        "-ExpectedProjectCount",
-        str(expected_project_count),
-        "-TimeoutSeconds",
-        str(timeout_seconds),
-        "-UseEnvironmentCredentials",
-    ]
+    command = build_powershell_command(
+        script_path=script_path,
+        workbook_path=resolved_workbook_path,
+        expected_project_count=expected_project_count,
+        timeout_seconds=timeout_seconds,
+        powershell_executable=powershell_executable,
+    )
 
     try:
+        # バイト列で受け取り、自分で読む。文字コードの事情は decode_powershell_output 参照。
         completed = subprocess.run(
             command,
             check=False,
             capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
             env=child_env,
             timeout=timeout_seconds + 30,
         )
@@ -81,18 +70,76 @@ def run_excel_server_save(
     except OSError as exc:
         raise ExcelServerSaveError(f"PowerShellまたはExcel自動保存を起動できません: {exc}") from exc
 
-    payload = _parse_result(completed.stdout)
+    stdout = decode_powershell_output(completed.stdout)
+    stderr = decode_powershell_output(completed.stderr)
+    payload = parse_result(stdout)
     if completed.returncode != 0:
-        detail = _safe_detail(payload, completed.stderr)
+        detail = _safe_detail(payload, stderr)
         raise ExcelServerSaveError(f"Excel自動保存に失敗しました: {detail}")
     _log_projects(payload)
     if payload.get("status") != "ok":
-        detail = _safe_detail(payload, completed.stderr)
+        detail = _safe_detail(payload, stderr)
         raise ExcelServerSaveError(f"Excel自動保存が完了しませんでした: {detail}")
     return payload
 
 
-def _parse_result(stdout: str) -> dict[str, Any]:
+def build_powershell_command(
+    *,
+    script_path: Path,
+    workbook_path: Path,
+    expected_project_count: int,
+    timeout_seconds: int,
+    powershell_executable: str = "powershell.exe",
+) -> list[str]:
+    """資格情報は環境変数で渡す。コマンド行に入れるとプロセス一覧から見えてしまう。"""
+    return [
+        powershell_executable,
+        "-NoLogo",
+        "-NoProfile",
+        "-NonInteractive",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        str(script_path),
+        "-WorkbookPath",
+        str(workbook_path),
+        "-ExpectedProjectCount",
+        str(expected_project_count),
+        "-TimeoutSeconds",
+        str(timeout_seconds),
+        "-UseEnvironmentCredentials",
+    ]
+
+
+def decode_powershell_output(data: bytes | str | None) -> str:
+    """PowerShell の出力を文字列にする。
+
+    スクリプトは先頭で出力を UTF-8 に切り替えるので、普段は UTF-8 で読める。
+    ただし切り替える前に起きたエラー（引数の解釈やスクリプトの構文エラー）は、
+    会社PCの Windows PowerShell 5.1 の既定どおり OEM コードページ（日本語環境では cp932）で出る。
+    UTF-8 として読めないときだけそちらで読む。
+    以前は UTF-8 決め打ちで、日本語のエラーが文字化けしたまま画面に出ていた。
+    """
+    if data is None:
+        return ""
+    if isinstance(data, str):
+        return data
+    try:
+        return data.decode("utf-8")
+    except UnicodeDecodeError:
+        return data.decode(_oem_encoding(), errors="replace")
+
+
+def _oem_encoding() -> str:
+    # "oem" は Windows の Python にだけある。それ以外は会社PCと同じ cp932 とみなす。
+    try:
+        codecs.lookup("oem")
+    except LookupError:
+        return "cp932"
+    return "oem"
+
+
+def parse_result(stdout: str) -> dict[str, Any]:
     lines = [line.strip() for line in stdout.splitlines() if line.strip()]
     if not lines:
         return {}

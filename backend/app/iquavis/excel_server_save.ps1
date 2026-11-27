@@ -6,6 +6,10 @@ param(
   [switch]$UseEnvironmentCredentials
 )
 
+# QOLONY reads this script's output as UTF-8. Windows PowerShell 5.1 (the one on the
+# company PCs) writes in the OEM code page (cp932) by default, which turned every
+# Japanese error and sheet name into mojibake in the QOLONY event bar.
+[Console]::OutputEncoding = New-Object System.Text.UTF8Encoding $false
 $ErrorActionPreference = "Stop"
 
 function Write-DebugLog([string]$Json) {
@@ -29,15 +33,30 @@ function Write-DebugLog([string]$Json) {
   }
 }
 
+function Get-CountSum([object[]]$Projects, [string]$Key) {
+  # Do not use Measure-Object -Property here. In Windows PowerShell 5.1 it cannot read
+  # the keys of [ordered]@{} (PowerShell 7 can), so the totals threw after Excel had
+  # already sent everything to the server, and the run was reported as a failure.
+  # A negative count means "could not read it" and is left out of the sum.
+  $sum = 0
+  foreach ($project in @($Projects)) {
+    $value = $project.$Key
+    if ($null -ne $value -and [int]$value -ge 0) {
+      $sum += [int]$value
+    }
+  }
+  return $sum
+}
+
 function Write-Result([string]$Status, [string]$Message, [object[]]$Projects) {
   [ordered]@{
     status = $Status
     message = $Message
     expected_project_count = $ExpectedProjectCount
     project_count = @($Projects).Count
-    sent_count = @($Projects | Where-Object { $_.total_count -ge 0 } | Measure-Object -Property total_count -Sum).Sum
-    success_count = @($Projects | Where-Object { $_.success_count -ge 0 } | Measure-Object -Property success_count -Sum).Sum
-    failure_count = @($Projects | Measure-Object -Property failure_count -Sum).Sum
+    sent_count = Get-CountSum $Projects "total_count"
+    success_count = Get-CountSum $Projects "success_count"
+    failure_count = Get-CountSum $Projects "failure_count"
     unknown_summary_count = @($Projects | Where-Object { $_.total_count -lt 0 }).Count
     projects = @($Projects)
   } | ConvertTo-Json -Compress -Depth 8 | ForEach-Object {
@@ -205,7 +224,18 @@ try {
   [GC]::WaitForPendingFinalizers()
 }
 
-Write-Result $status $message $results
+try {
+  Write-Result $status $message $results
+} catch {
+  # Excel has already run by now. If the summary itself breaks, say so in the result
+  # instead of dying with an empty stdout, which hid whether anything had been sent.
+  [ordered]@{
+    status = "failed"
+    message = "Excel finished (status=$($status), $($message)) but the result summary failed: " + $_.Exception.Message
+    project_count = @($results).Count
+  } | ConvertTo-Json -Compress
+  exit 1
+}
 if ($status -eq "ok") {
   exit 0
 }
